@@ -1,0 +1,372 @@
+name: publish uctags
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * *'
+
+jobs:
+
+  manpages:
+    runs-on: macos-latest
+
+    steps:
+      - run: brew uninstall go@1.17
+      - run: brew update
+      - run: brew install --overwrite python@3.10 python@3.11
+      - run: brew install automake pkg-config
+      - run: pip3 install -U docutils
+
+      - uses: actions/checkout@v3
+        with:
+          repository: universal-ctags/ctags
+
+      - run: ./autogen.sh
+      - run: ./configure
+      - run: cd man && make V=1
+      - run: |
+          V=$(date +%Y.%m.%d)
+
+          DIR="uctags-$V-manpages"
+
+          install -d "$DIR/man/man1/"
+          install -d "$DIR/man/man5/"
+          install -d "$DIR/man/man7/"
+
+          cp man/*.1 "$DIR/man/man1/"
+          cp man/*.5 "$DIR/man/man5/"
+          cp man/*.7 "$DIR/man/man7/"
+
+          tar cvJf "$DIR.tar.xz" "$DIR"
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: uctags---manpages-tar-xz
+          path: uctags-*-manpages.tar.xz
+
+      - run: |
+          git rev-parse HEAD > uctags-src-git-sha
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: uctags-src-git-sha
+          path: uctags-src-git-sha
+
+  netbsd-amd64:
+    needs: manpages
+    runs-on: macos-12
+
+    steps:
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-src-git-sha
+          path: .
+
+      - uses: leleliu008/github-actions-vagrant@main
+        with:
+          mem: 2048
+          box: generic/netbsd9
+          run: |
+            export HOME=/home/vagrant
+
+            run sudo sed -i 's/#ETCCERTSDIR=/ETCCERTSDIR=/' /usr/pkg/etc/ca-certificates-dir.conf
+            run sudo update-ca-certificates
+
+            unset ETCCERTSDIR
+
+            ETCCERTSDIR=$(sed -n '/^ETCCERTSDIR=/p' /usr/pkg/etc/ca-certificates-dir.conf | sed 's|ETCCERTSDIR=\(.*\)|\1|')
+
+            if [ -n "$ETCCERTSDIR" ] ; then
+                export SSL_CERT_FILE="$ETCCERTSDIR/ca-certificates.crt"
+            fi
+
+            run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+            run chmod a+x ppkg
+            run ./ppkg setup --use-system-package-manager
+            run ./ppkg update
+
+            gsed -i "/git-url/a git-sha: $(cat uctags-src-git-sha)" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+
+            run ./ppkg install uctags --link-type=static-only --install-lib=static
+            run ./ppkg pack    uctags
+
+      - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/.ppkg/packed/uctags-*-netbsd-amd64.tar.xz .
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: uctags-netbsd-amd64-tar-xz
+          path: ${{ github.workspace }}/uctags-*-netbsd-amd64.tar.xz
+
+  openbsd-amd64:
+    needs: netbsd-amd64
+    runs-on: macos-12
+
+    steps:
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-src-git-sha
+          path: .
+
+      - run: brew install openssh
+
+      - uses: leleliu008/github-actions-vagrant@main
+        with:
+          mem: 2048
+          box: generic/openbsd7
+          run: |
+            run sudo pkg_add curl
+
+            export HOME=/home/vagrant
+            export LD_LIBRARY_PATH=/usr/local/lib
+
+            run sudo ln -sf /usr/local/bin/pkgconf /usr/bin/pkg-config
+
+            run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+            run chmod a+x ppkg
+            run ./ppkg setup --use-system-package-manager
+            run ./ppkg update
+
+            gsed -i "/git-url/a git-sha: $(cat uctags-src-git-sha)" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+
+            run ./ppkg install uctags --link-type=static-only --install-lib=static
+            run ./ppkg pack    uctags
+
+      - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/.ppkg/packed/uctags-*-openbsd-amd64.tar.xz .
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: uctags-openbsd-amd64-tar-xz
+          path: ${{ github.workspace }}/uctags-*-openbsd-amd64.tar.xz
+
+  freebsd-amd64:
+    needs: openbsd-amd64
+    runs-on: macos-12
+
+    steps:
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-src-git-sha
+          path: .
+
+      - uses: leleliu008/github-actions-vagrant@main
+        with:
+          mem: 2048
+          box: generic/freebsd13
+          run: |
+            export HOME=/home/vagrant
+
+            run pkg install -y curl libnghttp2
+
+            run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+            run chmod a+x ppkg
+            run ./ppkg setup --use-system-package-manager
+            run ./ppkg update
+
+            gsed -i "/git-url/a git-sha: $(cat uctags-src-git-sha)" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+
+            run ./ppkg install uctags --link-type=static-only --install-lib=static
+            run ./ppkg pack    uctags
+
+      - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/.ppkg/packed/uctags-*-freebsd-amd64.tar.xz .
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: uctags-freebsd-amd64-tar-xz
+          path: ${{ github.workspace }}/uctags-*-freebsd-amd64.tar.xz
+
+  macos:
+    needs: freebsd-amd64
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target-version: ['11.0', '12.0', '13.0']
+        target-arch: [x86_64, arm64]
+
+    runs-on: macos-12
+
+    steps:
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-src-git-sha
+          path: .
+
+      - run: brew uninstall go@1.17
+      - run: brew update
+      - run: brew install --overwrite python@3.10 python@3.11
+
+      - run: curl -LO https://raw.githubusercontent.com/leleliu008/xcpkg/master/xcpkg
+      - run: chmod a+x xcpkg
+      - run: ./xcpkg setup --use-brew
+      - run: ./xcpkg update
+
+      - run: |
+          gsed -i "/git-url/a git-sha: $(cat uctags-src-git-sha)" ~/.xcpkg/repos.d/offical-core/formula/uctags.yml
+
+      - run: ./xcpkg install MacOSX/${{ matrix.target-version }}/${{ matrix.target-arch }}/uctags --link-type=static-prefered --install-lib=static
+      - run: ./xcpkg pack    MacOSX/${{ matrix.target-version }}/${{ matrix.target-arch }}/uctags -o .
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: uctags-macos${{ matrix.target-version }}-${{ matrix.target-arch }}-tar-xz
+          path: ${{ github.workspace }}/uctags-*.tar.xz
+
+  linux-aarch64:
+    needs: macos
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-src-git-sha
+          path: .
+
+      - run: |
+          cat > run.sh <<EOF
+          set -e
+
+          COLOR_GREEN='\033[0;32m'        # Green
+          COLOR_PURPLE='\033[0;35m'       # Purple
+          COLOR_OFF='\033[0m'             # Reset
+
+          echo() {
+              printf '%b\n' "\$*"
+          }
+
+          run() {
+              echo "\${COLOR_PURPLE}==>\${COLOR_OFF} \${COLOR_GREEN}\$@\${COLOR_OFF}"
+              eval "\$*"
+          }
+
+          run uname -a
+
+          run wget https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+          run chmod a+x ppkg
+          run ./ppkg setup --use-system-package-manager
+          run ./ppkg update
+
+          sed -i "/git-url/a git-sha: $(cat uctags-src-git-sha)" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+
+          run ./ppkg install uctags gh --link-type=static-only --install-lib=static
+          run ./ppkg pack    uctags
+
+          ls ~/.ppkg/packed/uctags-*.tar.xz > filepath.txt
+          EOF
+
+          chmod +x run.sh
+
+      # https://github.com/multiarch/qemu-user-static
+      - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - run: docker run -v $PWD:$PWD -w $PWD --name alpine arm64v8/alpine sh run.sh
+      - run: docker cp alpine:$(cat filepath.txt) .
+
+      - run: ls
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: uctags-linux-aarch64-tar-xz
+          path: uctags-*-linux-aarch64.tar.xz
+
+  linux-x86_64:
+    needs: linux-aarch64
+    runs-on: ubuntu-latest
+
+    container: alpine:3.16
+
+    steps:
+      - run: apk update
+      - run: apk add git
+
+      - uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-src-git-sha
+          path: .
+
+      - run: wget https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+      - run: chmod a+x ppkg
+      - run: ./ppkg setup --use-system-package-manager
+      - run: ./ppkg update
+
+      - run: |
+          sed -i "/git-url/a git-sha: $(cat uctags-src-git-sha)" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+
+      - run: ./ppkg install uctags gh --link-type=static-only --install-lib=static
+      - run: ./ppkg pack    uctags
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-netbsd-amd64-tar-xz
+          path: ~/.ppkg/packed/
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-openbsd-amd64-tar-xz
+          path: ~/.ppkg/packed/
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-freebsd-amd64-tar-xz
+          path: ~/.ppkg/packed/
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-macos11.0-x86_64-tar-xz
+          path: ~/.ppkg/packed/
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-macos12.0-x86_64-tar-xz
+          path: ~/.ppkg/packed/
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-macos13.0-x86_64-tar-xz
+          path: ~/.ppkg/packed/
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-macos11.0-arm64-tar-xz
+          path: ~/.ppkg/packed/
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-macos12.0-arm64-tar-xz
+          path: ~/.ppkg/packed/
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-macos13.0-arm64-tar-xz
+          path: ~/.ppkg/packed/
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-linux-aarch64-tar-xz
+          path: ~/.ppkg/packed/
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags---manpages-tar-xz
+          path: ~/.ppkg/packed/
+
+      - run: ls -a
+      - run: ls ~/.ppkg/packed
+
+      - run: printf '%s\n' ${{ github.token }} | ~/.ppkg/installed/gh/bin/gh auth login --with-token
+
+      - run: git config --global --add safe.directory /__w/ctags-nightly-build/ctags-nightly-build
+
+      - run: |
+          cd ~/.ppkg/packed
+          sed -n '/^git-sha:/p' ~/.ppkg/installed/uctags/.ppkg/receipt.yml      > notes.md
+          printf '\nsha256sum:\n```\n%s\n```\n' "$(sha256sum uctags-*.tar.xz)" >> notes.md
+
+      - run: |
+          V=$(ls ~/.ppkg/packed/uctags-*-linux-x86_64.tar.xz | cut -d- -f2)
+          ~/.ppkg/installed/gh/bin/gh release create $V ~/.ppkg/packed/uctags-*.tar.xz --notes-file ~/.ppkg/packed/notes.md
