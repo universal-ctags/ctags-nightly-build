@@ -363,9 +363,12 @@ jobs:
       - run: git config --global --add safe.directory /__w/ctags-nightly-build/ctags-nightly-build
 
       - run: |
+          GIT_SHA="(cat uctags-src-git-sha)"
+
           cd ~/.ppkg/packed
-          sed -n '/^git-sha:/p' ~/.ppkg/installed/uctags/.ppkg/receipt.yml      > notes.md
-          printf '\nsha256sum:\n```\n%s\n```\n' "$(sha256sum uctags-*.tar.xz)" >> notes.md
+
+          printf 'build-from: https://github.com/universal-ctags/ctags/tree/%s\n\n' "$GIT_SHA" > notes.md
+          printf 'sha256sum:\n```\n%s\n```\n' "$(sha256sum uctags-*.tar.xz)" >> notes.md
 
       - run: |
           V=$(ls ~/.ppkg/packed/uctags-*-linux-x86_64.tar.xz | cut -d- -f2)
