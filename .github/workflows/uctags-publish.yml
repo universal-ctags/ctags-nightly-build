@@ -369,4 +369,4 @@ jobs:
 
       - run: |
           V=$(ls ~/.ppkg/packed/uctags-*-linux-x86_64.tar.xz | cut -d- -f2)
-          ~/.ppkg/installed/gh/bin/gh release create $V ~/.ppkg/packed/uctags-*.tar.xz --notes-file ~/.ppkg/packed/notes.md
+          ~/.ppkg/installed/gh/bin/gh release create $V ~/.ppkg/packed/uctags-*.tar.xz --title $V --notes-file ~/.ppkg/packed/notes.md
