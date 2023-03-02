@@ -363,7 +363,7 @@ jobs:
       - run: git config --global --add safe.directory /__w/ctags-nightly-build/ctags-nightly-build
 
       - run: |
-          GIT_SHA="(cat uctags-src-git-sha)"
+          GIT_SHA="$(cat uctags-src-git-sha)"
 
           cd ~/.ppkg/packed
 
