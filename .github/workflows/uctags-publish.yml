@@ -7,19 +7,63 @@ on:
 
 jobs:
 
-  manpages:
-    runs-on: macos-latest
+  check:
+    runs-on: ubuntu-latest
+
+    env:
+      GH_TOKEN: ${{ github.token }}
 
     steps:
-      - run: brew uninstall go@1.17
-      - run: brew update
-      - run: brew install --overwrite python@3.10 python@3.11
-      - run: brew install automake pkg-config
+      - uses: actions/checkout@v3
+        with:
+          repository: universal-ctags/ctags
+
+      - id:  check-if-has-new-commit
+        run: |
+          cat > QUERY <<EOF
+          {
+            repository(owner: "universal-ctags", name: "ctags-nightly-build") {
+                latestRelease {
+                  name
+                }
+            }
+          }
+          EOF
+
+          LATEST_RELEASE_GIT_SHA="$(gh api graphql -f "query=$(cat QUERY)" --jq .data.repository.latestRelease.name | cut -d+ -f2)"
+
+          printf 'LATEST_RELEASE_GIT_SHA=%s\n' "$LATEST_RELEASE_GIT_SHA"
+
+          CURRENT_SOURCE_GIT_SHA="$(git rev-parse HEAD)"
+
+          printf 'CURRENT_SOURCE_GIT_SHA=%s\n' "$CURRENT_SOURCE_GIT_SHA"
+
+
+          if [ "$LATEST_RELEASE_GIT_SHA" = "$CURRENT_SOURCE_GIT_SHA" ] ; then
+              printf 'HAS_NEW_COMMIT=no\n'        >> "$GITHUB_OUTPUT"
+          else
+              printf 'HAS_NEW_COMMIT=yes\n'       >> "$GITHUB_OUTPUT"
+          fi
+
+          printf 'GIT_SHA=%s\n' "$CURRENT_SOURCE_GIT_SHA" >> "$GITHUB_OUTPUT"
+
+    outputs:
+      if-has-new-commit: ${{ steps.check-if-has-new-commit.outputs.HAS_NEW_COMMIT }}
+      git-sha:           ${{ steps.check-if-has-new-commit.outputs.GIT_SHA }}
+
+  manpages:
+    needs: check
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    runs-on: ubuntu-latest
+
+    steps:
       - run: pip3 install -U docutils
 
       - uses: actions/checkout@v3
         with:
           repository: universal-ctags/ctags
+          ref: ${{ needs.check.outputs.git-sha }}
 
       - run: ./autogen.sh
       - run: ./configure
@@ -44,25 +88,13 @@ jobs:
           name: uctags---manpages-tar-xz
           path: uctags-*-manpages.tar.xz
 
-      - run: |
-          git rev-parse HEAD > uctags-src-git-sha
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: uctags-src-git-sha
-          path: uctags-src-git-sha
-
   netbsd-amd64:
-    needs: manpages
+    needs: [check, manpages]
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
     runs-on: macos-12
 
     steps:
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: uctags-src-git-sha
-          path: .
-
       - uses: leleliu008/github-actions-vagrant@main
         with:
           mem: 2048
@@ -86,7 +118,7 @@ jobs:
             run ./ppkg setup --use-system-package-manager
             run ./ppkg update
 
-            gsed -i "/git-url/a git-sha: $(cat uctags-src-git-sha)" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+            gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
             run ./ppkg install uctags --link-type=static-only --install-lib=static
             run ./ppkg pack    uctags
@@ -96,19 +128,15 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: uctags-netbsd-amd64-tar-xz
-          path: ${{ github.workspace }}/uctags-*-netbsd-amd64.tar.xz
+          path: uctags-*-netbsd-amd64.tar.xz
 
   openbsd-amd64:
-    needs: netbsd-amd64
+    needs: [check, netbsd-amd64]
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
     runs-on: macos-12
 
     steps:
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: uctags-src-git-sha
-          path: .
-
       - run: brew install openssh
 
       - uses: leleliu008/github-actions-vagrant@main
@@ -128,7 +156,7 @@ jobs:
             run ./ppkg setup --use-system-package-manager
             run ./ppkg update
 
-            gsed -i "/git-url/a git-sha: $(cat uctags-src-git-sha)" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+            gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
             run ./ppkg install uctags --link-type=static-only --install-lib=static
             run ./ppkg pack    uctags
@@ -138,19 +166,15 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: uctags-openbsd-amd64-tar-xz
-          path: ${{ github.workspace }}/uctags-*-openbsd-amd64.tar.xz
+          path: uctags-*-openbsd-amd64.tar.xz
 
   freebsd-amd64:
-    needs: openbsd-amd64
+    needs: [check, openbsd-amd64]
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
     runs-on: macos-12
 
     steps:
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: uctags-src-git-sha
-          path: .
-
       - uses: leleliu008/github-actions-vagrant@main
         with:
           mem: 2048
@@ -165,7 +189,7 @@ jobs:
             run ./ppkg setup --use-system-package-manager
             run ./ppkg update
 
-            gsed -i "/git-url/a git-sha: $(cat uctags-src-git-sha)" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+            gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
             run ./ppkg install uctags --link-type=static-only --install-lib=static
             run ./ppkg pack    uctags
@@ -175,10 +199,13 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: uctags-freebsd-amd64-tar-xz
-          path: ${{ github.workspace }}/uctags-*-freebsd-amd64.tar.xz
+          path: uctags-*-freebsd-amd64.tar.xz
 
   macos:
-    needs: freebsd-amd64
+    needs: [check, freebsd-amd64]
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    runs-on: macos-12
 
     strategy:
       fail-fast: false
@@ -186,15 +213,7 @@ jobs:
         target-version: ['11.0', '12.0', '13.0']
         target-arch: [x86_64, arm64]
 
-    runs-on: macos-12
-
     steps:
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: uctags-src-git-sha
-          path: .
-
       - run: brew uninstall go@1.17
       - run: brew update
       - run: brew install --overwrite python@3.10 python@3.11
@@ -205,7 +224,7 @@ jobs:
       - run: ./xcpkg update
 
       - run: |
-          gsed -i "/git-url/a git-sha: $(cat uctags-src-git-sha)" ~/.xcpkg/repos.d/offical-core/formula/uctags.yml
+          gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.xcpkg/repos.d/offical-core/formula/uctags.yml
 
       - run: ./xcpkg install MacOSX/${{ matrix.target-version }}/${{ matrix.target-arch }}/uctags --link-type=static-prefered --install-lib=static
       - run: ./xcpkg pack    MacOSX/${{ matrix.target-version }}/${{ matrix.target-arch }}/uctags -o .
@@ -213,19 +232,15 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: uctags-macos${{ matrix.target-version }}-${{ matrix.target-arch }}-tar-xz
-          path: ${{ github.workspace }}/uctags-*.tar.xz
+          path: uctags-*.tar.xz
 
   linux-aarch64:
-    needs: macos
+    needs: [check, macos]
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
     runs-on: ubuntu-latest
 
     steps:
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: uctags-src-git-sha
-          path: .
-
       - run: |
           cat > run.sh <<EOF
           set -e
@@ -250,7 +265,7 @@ jobs:
           run ./ppkg setup --use-system-package-manager
           run ./ppkg update
 
-          sed -i "/git-url/a git-sha: $(cat uctags-src-git-sha)" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+          sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
           run ./ppkg install uctags gh --link-type=static-only --install-lib=static
           run ./ppkg pack    uctags
@@ -273,105 +288,112 @@ jobs:
           path: uctags-*-linux-aarch64.tar.xz
 
   linux-x86_64:
-    needs: linux-aarch64
+    needs: [check, linux-aarch64]
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
     runs-on: ubuntu-latest
 
     container: alpine:3.16
 
     steps:
-      - run: apk update
-      - run: apk add git
-
-      - uses: actions/checkout@v3
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: uctags-src-git-sha
-          path: .
-
       - run: wget https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
       - run: chmod a+x ppkg
       - run: ./ppkg setup --use-system-package-manager
       - run: ./ppkg update
 
       - run: |
-          sed -i "/git-url/a git-sha: $(cat uctags-src-git-sha)" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+          sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
-      - run: ./ppkg install uctags gh --link-type=static-only --install-lib=static
+      - run: ./ppkg install uctags --link-type=static-only --install-lib=static
       - run: ./ppkg pack    uctags
 
+      - uses: actions/upload-artifact@v3
+        with:
+          name: uctags-linux-x86_64-tar-xz
+          path: ~/.ppkg/packed/uctags-*-linux-x86_64.tar.xz
+
+
+  publish:
+    needs: [check, linux-x86_64]
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    runs-on: ubuntu-latest
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
       - uses: actions/download-artifact@v3
         with:
           name: uctags-netbsd-amd64-tar-xz
-          path: ~/.ppkg/packed/
+          path: .
 
       - uses: actions/download-artifact@v3
         with:
           name: uctags-openbsd-amd64-tar-xz
-          path: ~/.ppkg/packed/
+          path: .
 
       - uses: actions/download-artifact@v3
         with:
           name: uctags-freebsd-amd64-tar-xz
-          path: ~/.ppkg/packed/
+          path: .
 
       - uses: actions/download-artifact@v3
         with:
           name: uctags-macos11.0-x86_64-tar-xz
-          path: ~/.ppkg/packed/
+          path: .
 
       - uses: actions/download-artifact@v3
         with:
           name: uctags-macos12.0-x86_64-tar-xz
-          path: ~/.ppkg/packed/
+          path: .
 
       - uses: actions/download-artifact@v3
         with:
           name: uctags-macos13.0-x86_64-tar-xz
-          path: ~/.ppkg/packed/
+          path: .
 
       - uses: actions/download-artifact@v3
         with:
           name: uctags-macos11.0-arm64-tar-xz
-          path: ~/.ppkg/packed/
+          path: .
 
       - uses: actions/download-artifact@v3
         with:
           name: uctags-macos12.0-arm64-tar-xz
-          path: ~/.ppkg/packed/
+          path: .
 
       - uses: actions/download-artifact@v3
         with:
           name: uctags-macos13.0-arm64-tar-xz
-          path: ~/.ppkg/packed/
+          path: .
 
       - uses: actions/download-artifact@v3
         with:
           name: uctags-linux-aarch64-tar-xz
-          path: ~/.ppkg/packed/
+          path: .
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: uctags-linux-x86_64-tar-xz
+          path: .
 
       - uses: actions/download-artifact@v3
         with:
           name: uctags---manpages-tar-xz
-          path: ~/.ppkg/packed/
+          path: .
 
       - run: ls -a
-      - run: ls ~/.ppkg/packed
-
-      - run: printf '%s\n' ${{ github.token }} | ~/.ppkg/installed/gh/bin/gh auth login --with-token
-
-      - run: git config --global --add safe.directory /__w/ctags-nightly-build/ctags-nightly-build
 
       - run: |
-          GIT_SHA="$(cat uctags-src-git-sha)"
-
-          cd ~/.ppkg/packed
-
-          printf 'build-from: https://github.com/universal-ctags/ctags/tree/%s\n\n' "$GIT_SHA" > notes.md
+          printf 'build-from: https://github.com/universal-ctags/ctags/tree/%s\n\n' ${{ needs.check.outputs.git-sha }} > notes.md
           printf 'sha256sum:\n```\n%s\n```\n' "$(sha256sum uctags-*.tar.xz)" >> notes.md
 
-      - run: |
-          VERSION="$(ls ~/.ppkg/packed/uctags-*-linux-x86_64.tar.xz | cut -d- -f2)"
-          GIT_SHA="$(cat uctags-src-git-sha)"
-          TAGNAME="$VERSION+$GIT_SHA"
-          ~/.ppkg/installed/gh/bin/gh release create "$TAGNAME" ~/.ppkg/packed/uctags-*.tar.xz --title "$TAGNAME" --notes-file ~/.ppkg/packed/notes.md
+          VERSION="$(ls uctags-*-linux-x86_64.tar.xz | cut -d- -f2)"
+          TAGNAME="$VERSION+${{ needs.check.outputs.git-sha }}"
+
+          # to avaid: failed to run git: fatal: not a git repository (or any of the parent directories): .git
+          git -c init.defaultBranch=master init
+          git remote add origin ${{ github.repositoryUrl }}
+
+          gh release create "$TAGNAME" uctags-*.tar.xz --title "$TAGNAME" --notes-file notes.md
