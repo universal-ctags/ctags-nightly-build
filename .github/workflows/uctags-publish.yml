@@ -214,13 +214,9 @@ jobs:
         target-arch: [x86_64, arm64]
 
     steps:
-      - run: brew uninstall go@1.17
-      - run: brew update
-      - run: brew install --overwrite python@3.10 python@3.11
-
       - run: curl -LO https://raw.githubusercontent.com/leleliu008/xcpkg/master/xcpkg
       - run: chmod a+x xcpkg
-      - run: ./xcpkg setup --use-brew
+      - run: ./xcpkg setup
       - run: ./xcpkg update
 
       - run: |
