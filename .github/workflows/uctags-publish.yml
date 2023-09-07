@@ -123,9 +123,9 @@ jobs:
             ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
             run ./ppkg install uctags --link-type=static-only --install-lib=static
-            run ./ppkg pack    uctags
+            run ./ppkg pack    uctags -o /home/vagrant/
 
-      - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/.ppkg/packed/uctags-*-netbsd-amd64.tar.xz .
+      - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/uctags-*-netbsd-amd64.tar.xz .
 
       - uses: actions/upload-artifact@v3
         with:
@@ -161,9 +161,9 @@ jobs:
             ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
             run ./ppkg install uctags --link-type=static-only --install-lib=static
-            run ./ppkg pack    uctags
+            run ./ppkg pack    uctags -o /home/vagrant/
 
-      - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/.ppkg/packed/uctags-*-openbsd-amd64.tar.xz .
+      - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/uctags-*-openbsd-amd64.tar.xz .
 
       - uses: actions/upload-artifact@v3
         with:
@@ -195,9 +195,9 @@ jobs:
             ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
             run ./ppkg install uctags --link-type=static-only --install-lib=static
-            run ./ppkg pack    uctags
+            run ./ppkg pack    uctags -o /home/vagrant/
 
-      - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/.ppkg/packed/uctags-*-freebsd-amd64.tar.xz .
+      - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/uctags-*-freebsd-amd64.tar.xz .
 
       - uses: actions/upload-artifact@v3
         with:
@@ -226,7 +226,7 @@ jobs:
           ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.xcpkg/repos.d/offical-core/formula/uctags.yml
 
       - run: ./xcpkg install uctags:MacOSX:${{ matrix.target-version }}:${{ matrix.target-arch }} --link-type=static-prefered --install-lib=static
-      - run: ./xcpkg pack    uctags:MacOSX:${{ matrix.target-version }}:${{ matrix.target-arch }} -o .
+      - run: ./xcpkg pack    uctags:MacOSX:${{ matrix.target-version }}:${{ matrix.target-arch }}
 
       - uses: actions/upload-artifact@v3
         with:
@@ -270,7 +270,7 @@ jobs:
           sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
           run ./ppkg install uctags gh --link-type=static-only --install-lib=static
-          run ./ppkg pack    uctags -o .
+          run ./ppkg pack    uctags
           EOF
 
           chmod +x run.sh
@@ -307,7 +307,7 @@ jobs:
           sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
       - run: ./ppkg install uctags --link-type=static-only --install-lib=static
-      - run: ./ppkg pack    uctags -o .
+      - run: ./ppkg pack    uctags
 
       - uses: actions/upload-artifact@v3
         with:
