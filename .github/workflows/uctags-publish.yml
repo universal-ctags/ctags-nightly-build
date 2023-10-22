@@ -269,7 +269,7 @@ jobs:
 
           sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
-          run ./ppkg install uctags gh --link-type=static-only --install-lib=static
+          run ./ppkg install uctags --link-type=static-only --install-lib=static
           run ./ppkg pack    uctags
           EOF
 
