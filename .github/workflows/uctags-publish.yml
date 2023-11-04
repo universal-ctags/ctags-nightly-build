@@ -122,7 +122,7 @@ jobs:
 
             ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
-            run ./ppkg install uctags --link-type=static-only --install-lib=static
+            run ./ppkg install uctags --link-type=static-full
             run ./ppkg pack    uctags -o /home/vagrant/
 
       - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/uctags-*-netbsd-amd64.tar.xz .
@@ -160,7 +160,7 @@ jobs:
 
             ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
-            run ./ppkg install uctags --link-type=static-only --install-lib=static
+            run ./ppkg install uctags --link-type=static-full
             run ./ppkg pack    uctags -o /home/vagrant/
 
       - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/uctags-*-openbsd-amd64.tar.xz .
@@ -194,7 +194,7 @@ jobs:
 
             ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
-            run ./ppkg install uctags --link-type=static-only --install-lib=static
+            run ./ppkg install uctags --link-type=static-full
             run ./ppkg pack    uctags -o /home/vagrant/
 
       - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/uctags-*-freebsd-amd64.tar.xz .
@@ -225,7 +225,7 @@ jobs:
       - run: |
           ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.xcpkg/repos.d/offical-core/formula/uctags.yml
 
-      - run: ./xcpkg install uctags:MacOSX:${{ matrix.target-version }}:${{ matrix.target-arch }} --link-type=static-prefered --install-lib=static
+      - run: ./xcpkg install uctags:MacOSX:${{ matrix.target-version }}:${{ matrix.target-arch }} --link-type=static-prefered
       - run: ./xcpkg pack    uctags:MacOSX:${{ matrix.target-version }}:${{ matrix.target-arch }}
 
       - uses: actions/upload-artifact@v3
@@ -269,7 +269,7 @@ jobs:
 
           sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
-          run ./ppkg install uctags --link-type=static-only --install-lib=static
+          run ./ppkg install uctags --link-type=static-full
           run ./ppkg pack    uctags
           EOF
 
@@ -306,7 +306,7 @@ jobs:
       - run: |
           sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
-      - run: ./ppkg install uctags --link-type=static-only --install-lib=static
+      - run: ./ppkg install uctags --link-type=static-full
       - run: ./ppkg pack    uctags
 
       - uses: actions/upload-artifact@v3
