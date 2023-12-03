@@ -137,7 +137,7 @@ jobs:
       - run: |
           ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
 
-      - run: ./ppkg install openbsd-${{ matrix.target-version }}-amd64/uctags --link-type=static-full
+      - run: ./ppkg install openbsd-${{ matrix.target-version }}-amd64/uctags --link-type=static-most
       - run: ./ppkg pack    openbsd-${{ matrix.target-version }}-amd64/uctags
 
       - uses: actions/upload-artifact@v3
