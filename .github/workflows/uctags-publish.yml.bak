@@ -91,88 +91,119 @@ jobs:
     needs: [check, manpages]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        # https://ftp.netbsd.org/pub/NetBSD/
-        target-version: ['9.1', '9.2', '9.3']
+    runs-on: macos-12
 
     steps:
-      - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
-      - run: chmod a+x ppkg
-      - run: ./ppkg setup
-      - run: ./ppkg update
+      - uses: leleliu008/github-actions-vagrant@main
+        with:
+          mem: 2048
+          box: generic/netbsd9
+          run: |
+            export HOME=/home/vagrant
 
-      - run: |
-          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.xcpkg/repos.d/offical-core/formula/uctags.yml
+            run sudo sed -i 's/#ETCCERTSDIR=/ETCCERTSDIR=/' /usr/pkg/etc/ca-certificates-dir.conf
+            run sudo update-ca-certificates
 
-      - run: ./ppkg install netbsd-${{ matrix.target-version }}-amd64/uctags --link-type=static-full
-      - run: ./ppkg pack    netbsd-${{ matrix.target-version }}-amd64/uctags
+            unset ETCCERTSDIR
+
+            ETCCERTSDIR=$(sed -n '/^ETCCERTSDIR=/p' /usr/pkg/etc/ca-certificates-dir.conf | sed 's|ETCCERTSDIR=\(.*\)|\1|')
+
+            if [ -n "$ETCCERTSDIR" ] ; then
+                export SSL_CERT_FILE="$ETCCERTSDIR/ca-certificates.crt"
+            fi
+
+            run sudo pkgin -y update
+            run sudo pkgin -y install llvm
+
+            run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+            run chmod a+x ppkg
+            run ./ppkg setup
+            run ./ppkg update
+
+            ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+
+            run ./ppkg install uctags --link-type=static-full --jobs=1
+            run ./ppkg pack    uctags -o /home/vagrant/
+
+      - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/uctags-*-netbsd-amd64.tar.xz .
 
       - uses: actions/upload-artifact@v3
         with:
-          name: uctags---netbsd-${{ matrix.target-version }}-amd64-tar-xz
-          path: uctags-*-netbsd-${{ matrix.target-version }}-amd64.tar.xz
+          name: uctags---netbsd-amd64-tar-xz
+          path: uctags-*-netbsd-amd64.tar.xz
 
   openbsd-amd64:
     needs: [check, netbsd-amd64]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        # https://cdn.openbsd.org/pub/OpenBSD/
-        target-version: ['7.2', '7.3', '7.4']
+    runs-on: macos-12
 
     steps:
-      - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
-      - run: chmod a+x ppkg
-      - run: ./ppkg setup
-      - run: ./ppkg update
+      - run: brew install openssh
 
-      - run: |
-          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.xcpkg/repos.d/offical-core/formula/uctags.yml
+      - uses: leleliu008/github-actions-vagrant@main
+        with:
+          mem: 2048
+          box: generic/openbsd7
+          box-version: 4.2.16
+          run: |
+            run sudo pkg_add curl gtar-- gcc%11
 
-      - run: ./ppkg install openbsd-${{ matrix.target-version }}-amd64/uctags --link-type=static-full
-      - run: ./ppkg pack    openbsd-${{ matrix.target-version }}-amd64/uctags
+            run sudo ln -s /usr/local/bin/gtar /usr/bin/tar
+
+            export HOME=/home/vagrant
+            export LD_LIBRARY_PATH=/usr/local/lib
+
+            run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+            run chmod a+x ppkg
+            run ./ppkg setup
+            run ./ppkg update
+
+            ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+
+            run ./ppkg install uctags --link-type=static-full --jobs=1
+            run ./ppkg pack    uctags -o /home/vagrant/
+
+      - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/uctags-*-openbsd-amd64.tar.xz .
 
       - uses: actions/upload-artifact@v3
         with:
-          name: uctags---openbsd-${{ matrix.target-version }}-amd64-tar-xz
-          path: uctags-*-openbsd-${{ matrix.target-version }}-amd64.tar.xz
+          name: uctags---openbsd-amd64-tar-xz
+          path: uctags-*-openbsd-amd64.tar.xz
 
   freebsd-amd64:
     needs: [check, openbsd-amd64]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        # https://archive.freebsd.org/old-releases/amd64/
-        target-version: ['13.0', '13.1', '13.2']
+    runs-on: macos-12
 
     steps:
-      - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
-      - run: chmod a+x ppkg
-      - run: ./ppkg setup
-      - run: ./ppkg update
+      - uses: leleliu008/github-actions-vagrant@main
+        with:
+          mem: 2048
+          box: generic/freebsd13
+          run: |
+            export HOME=/home/vagrant
 
-      - run: |
-          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.xcpkg/repos.d/offical-core/formula/uctags.yml
+            run pkg update
+            run pkg install -y gcc curl libnghttp2
 
-      - run: ./ppkg install freebsd-${{ matrix.target-version }}-amd64/uctags --link-type=static-full
-      - run: ./ppkg pack    freebsd-${{ matrix.target-version }}-amd64/uctags
+            run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+            run chmod a+x ppkg
+            run ./ppkg setup
+            run ./ppkg update
+
+            ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+
+            run ./ppkg install uctags --link-type=static-full --jobs=1
+            run ./ppkg pack    uctags -o /home/vagrant/
+
+      - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/uctags-*-freebsd-amd64.tar.xz .
 
       - uses: actions/upload-artifact@v3
         with:
-          name: uctags---freebsd-${{ matrix.target-version }}-amd64-tar-xz
-          path: uctags-*-freebsd-${{ matrix.target-version }}-amd64.tar.xz
+          name: uctags---freebsd-amd64-tar-xz
+          path: uctags-*-freebsd-amd64.tar.xz
 
   macos:
     needs: [check, freebsd-amd64]
@@ -297,51 +328,18 @@ jobs:
     steps:
       - uses: actions/download-artifact@v3
         with:
-          name: uctags---netbsd-9.1-amd64-tar-xz
+          name: uctags---netbsd-amd64-tar-xz
           path: .
 
       - uses: actions/download-artifact@v3
         with:
-          name: uctags---netbsd-9.2-amd64-tar-xz
+          name: uctags---openbsd-amd64-tar-xz
           path: .
 
       - uses: actions/download-artifact@v3
         with:
-          name: uctags---netbsd-9.3-amd64-tar-xz
+          name: uctags---freebsd-amd64-tar-xz
           path: .
-
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: uctags---openbsd-7.2-amd64-tar-xz
-          path: .
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: uctags---openbsd-7.3-amd64-tar-xz
-          path: .
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: uctags---openbsd-7.4-amd64-tar-xz
-          path: .
-
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: uctags---freebsd-13.0-amd64-tar-xz
-          path: .
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: uctags---freebsd-13.1-amd64-tar-xz
-          path: .
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: uctags---freebsd-13.2-amd64-tar-xz
-          path: .
-
 
       - uses: actions/download-artifact@v3
         with:
