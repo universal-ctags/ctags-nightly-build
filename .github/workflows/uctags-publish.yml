@@ -106,7 +106,7 @@ jobs:
       - run: ./ppkg update
 
       - run: |
-          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
       - run: ./ppkg install netbsd-${{ matrix.target-version }}-amd64/uctags --link-type=static-full
       - run: ./ppkg pack    netbsd-${{ matrix.target-version }}-amd64/uctags
@@ -135,7 +135,7 @@ jobs:
       - run: ./ppkg update
 
       - run: |
-          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
       - run: ./ppkg install openbsd-${{ matrix.target-version }}-amd64/uctags --link-type=static-most
       - run: ./ppkg pack    openbsd-${{ matrix.target-version }}-amd64/uctags
@@ -164,7 +164,7 @@ jobs:
       - run: ./ppkg update
 
       - run: |
-          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
       - run: ./ppkg install freebsd-${{ matrix.target-version }}-amd64/uctags --link-type=static-full
       - run: ./ppkg pack    freebsd-${{ matrix.target-version }}-amd64/uctags
@@ -193,7 +193,7 @@ jobs:
       - run: ./xcpkg update
 
       - run: |
-          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.xcpkg/repos.d/offical-core/formula/uctags.yml
+          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.xcpkg/repos.d/official-core/formula/uctags.yml
 
       - run: ./xcpkg install MacOSX-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags --link-type=static-prefered
       - run: ./xcpkg pack    MacOSX-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags
@@ -237,7 +237,7 @@ jobs:
           run ./ppkg setup
           run ./ppkg update
 
-          sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+          sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
           run ./ppkg install uctags --link-type=static-full
           run ./ppkg pack    uctags
@@ -274,7 +274,7 @@ jobs:
       - run: ./ppkg update
 
       - run: |
-          sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/offical-core/formula/uctags.yml
+          sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
       - run: ./ppkg install uctags --link-type=static-full
       - run: ./ppkg pack    uctags
