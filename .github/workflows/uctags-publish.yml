@@ -195,7 +195,7 @@ jobs:
       - run: |
           ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.xcpkg/repos.d/official-core/formula/uctags.yml
 
-      - run: ./xcpkg install MacOSX-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags --link-type=static-prefered
+      - run: ./xcpkg install MacOSX-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags --link-type=static-most
       - run: ./xcpkg pack    MacOSX-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags
 
       - uses: actions/upload-artifact@v3
