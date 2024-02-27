@@ -14,7 +14,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           repository: universal-ctags/ctags
 
@@ -59,7 +59,7 @@ jobs:
     steps:
       - run: pip3 install -U docutils
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           repository: universal-ctags/ctags
           ref: ${{ needs.check.outputs.git-sha }}
@@ -82,7 +82,7 @@ jobs:
 
           tar cvJf "$DIR.tar.xz" "$DIR"
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: uctags---manpages-tar-xz
           path: uctags-*-manpages.tar.xz
@@ -127,7 +127,7 @@ jobs:
 
       - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/uctags-*-netbsd-amd64.tar.xz .
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: uctags---netbsd-amd64-tar-xz
           path: uctags-*-netbsd-amd64.tar.xz
@@ -166,7 +166,7 @@ jobs:
 
       - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/uctags-*-openbsd-amd64.tar.xz .
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: uctags---openbsd-amd64-tar-xz
           path: uctags-*-openbsd-amd64.tar.xz
@@ -200,7 +200,7 @@ jobs:
 
       - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/uctags-*-freebsd-amd64.tar.xz .
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: uctags---freebsd-amd64-tar-xz
           path: uctags-*-freebsd-amd64.tar.xz
@@ -229,7 +229,7 @@ jobs:
       - run: ./xcpkg install uctags:MacOSX:${{ matrix.target-version }}:${{ matrix.target-arch }} --link-type=static-prefered
       - run: ./xcpkg pack    uctags:MacOSX:${{ matrix.target-version }}:${{ matrix.target-arch }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: uctags-macos${{ matrix.target-version }}-${{ matrix.target-arch }}-tar-xz
           path: uctags-*.tar.xz
@@ -282,7 +282,7 @@ jobs:
 
       - run: ls
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: uctags---linux-aarch64-tar-xz
           path: uctags-*-linux-aarch64.tar.xz
@@ -310,7 +310,7 @@ jobs:
       - run: ./ppkg install uctags --link-type=static-full
       - run: ./ppkg pack    uctags
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: uctags---linux-x86_64-tar-xz
           path: uctags-*-linux-x86_64.tar.xz
@@ -326,62 +326,62 @@ jobs:
       GH_TOKEN: ${{ github.token }}
 
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: uctags---netbsd-amd64-tar-xz
           path: .
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: uctags---openbsd-amd64-tar-xz
           path: .
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: uctags---freebsd-amd64-tar-xz
           path: .
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: uctags-macos11.0-x86_64-tar-xz
           path: .
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: uctags-macos12.0-x86_64-tar-xz
           path: .
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: uctags-macos13.0-x86_64-tar-xz
           path: .
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: uctags-macos11.0-arm64-tar-xz
           path: .
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: uctags-macos12.0-arm64-tar-xz
           path: .
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: uctags-macos13.0-arm64-tar-xz
           path: .
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: uctags---linux-aarch64-tar-xz
           path: .
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: uctags---linux-x86_64-tar-xz
           path: .
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: uctags---manpages-tar-xz
           path: .
