@@ -126,7 +126,7 @@ jobs:
       fail-fast: false
       matrix:
         # https://cdn.openbsd.org/pub/OpenBSD/
-        target-version: ['7.2', '7.3', '7.4']
+        target-version: ['7.5', '7.4', '7.3']
 
     steps:
       - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
