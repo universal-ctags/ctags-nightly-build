@@ -8,7 +8,7 @@ This repository only provides prebuilt binaries for `macOS`, `Linux`, `FreeBSD`,
 
 This repository only for building purpose. If you encounter any problems with these prebuilt binaries, please file an issue on [Universal Ctags issue tracker](https://github.com/universal-ctags/ctags/issues)
 
-If you are extreamly concerned about performance, building it on you local machine from [source](https://github.com/universal-ctags/ctags) is a better choice as long as you know `autotools` build system well.
+If you are extreamly concerned about performance, building it on you local machine from [source](https://github.com/universal-ctags/ctags) is a better choice as long as you know [Autotools](https://www.gnu.org/software/automake/manual/html_node/Autotools-Introduction.html) well.
 
 ## Dependency Graph
 <img src="uctags-dependencies.svg" alt="dependencies" >
@@ -24,14 +24,13 @@ uctags-2023.02.02-linux-x86_64
 │   ├── optscript
 │   └── readtags
 └── .ppkg
-    ├── buildon.yml
     ├── config.log
     ├── COPYING
     ├── dependencies.box
     ├── dependencies.dot
-    ├── manifest.txt
+    ├── MANIFEST.txt
     ├── README.md
-    └── receipt.yml
+    └── RECEIPT.yml
 ```
 
 These archive files are created by [ppkg](https://github.com/leleliu008/ppkg), some extra files are shipped with the archive, which all are located in a hidden directory named `.ppkg`.
@@ -47,14 +46,13 @@ uctags-2023.02.02-MacOSX11.0-arm64
 │   ├── optscript
 │   └── readtags
 └── .xcpkg
-    ├── buildon.yml
     ├── config.log
     ├── COPYING
     ├── dependencies.box
     ├── dependencies.dot
-    ├── manifest.txt
+    ├── MANIFEST.txt
     ├── README.md
-    └── receipt.yml
+    └── RECEIPT.yml
 ```
 
 These archive files are created by [xcpkg](https://github.com/leleliu008/xcpkg), some extra files are shipped with the archive, which all are located in a hidden directory named `.xcpkg`.
