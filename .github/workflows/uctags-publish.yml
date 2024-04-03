@@ -68,27 +68,23 @@ jobs:
       - run: ./configure
       - run: cd man && make V=1
       - run: |
-          V=$(date +%Y.%m.%d)
+          install -d manpages/man/man1/
+          install -d manpages/man/man5/
+          install -d manpages/man/man7/
 
-          DIR="uctags-$V-manpages"
+          cp man/*.1 manpages/man/man1/
+          cp man/*.5 manpages/man/man5/
+          cp man/*.7 manpages/man/man7/
 
-          install -d "$DIR/man/man1/"
-          install -d "$DIR/man/man5/"
-          install -d "$DIR/man/man7/"
-
-          cp man/*.1 "$DIR/man/man1/"
-          cp man/*.5 "$DIR/man/man5/"
-          cp man/*.7 "$DIR/man/man7/"
-
-          tar cvJf "$DIR.tar.xz" "$DIR"
+          tar cvJf manpages.tar.xz manpages
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---manpages-tar-xz
-          path: uctags-*-manpages.tar.xz
+          name: manpages
+          path: manpages.tar.xz
 
-  netbsd-amd64:
-    needs: [check, manpages]
+  bsd:
+    needs: [check]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
     runs-on: ubuntu-latest
@@ -97,65 +93,9 @@ jobs:
       fail-fast: false
       matrix:
         # https://ftp.netbsd.org/pub/NetBSD/
-        target-version: ['9.1', '9.2', '9.3']
-
-    steps:
-      - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
-      - run: chmod a+x ppkg
-      - run: ./ppkg setup
-      - run: ./ppkg update
-
-      - run: |
-          ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
-
-      - run: ./ppkg install netbsd-${{ matrix.target-version }}-amd64/uctags --link-type=static-full
-      - run: ./ppkg pack    netbsd-${{ matrix.target-version }}-amd64/uctags
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: uctags---netbsd-${{ matrix.target-version }}-amd64-tar-xz
-          path: uctags-*-netbsd-${{ matrix.target-version }}-amd64.tar.xz
-
-  openbsd-amd64:
-    needs: [check, netbsd-amd64]
-    if: needs.check.outputs.if-has-new-commit == 'yes'
-
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
         # https://cdn.openbsd.org/pub/OpenBSD/
-        target-version: ['7.4', '7.3']
-
-    steps:
-      - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
-      - run: chmod a+x ppkg
-      - run: ./ppkg setup
-      - run: ./ppkg update
-
-      - run: |
-          ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
-
-      - run: ./ppkg install openbsd-${{ matrix.target-version }}-amd64/uctags --link-type=static-most
-      - run: ./ppkg pack    openbsd-${{ matrix.target-version }}-amd64/uctags
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: uctags---openbsd-${{ matrix.target-version }}-amd64-tar-xz
-          path: uctags-*-openbsd-${{ matrix.target-version }}-amd64.tar.xz
-
-  freebsd-amd64:
-    needs: [check, openbsd-amd64]
-    if: needs.check.outputs.if-has-new-commit == 'yes'
-
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
         # https://archive.freebsd.org/old-releases/amd64/
-        target-version: ['13.0', '13.1', '13.2']
+        target: ['netbsd-9.1-amd64', 'netbsd-9.2-amd64', 'netbsd-9.3-amd64', 'openbsd-7.4-amd64', 'openbsd-7.3-amd64', 'freebsd-13.2-amd64', 'freebsd-13.1-amd64', 'freebsd-13.0-amd64']
 
     steps:
       - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
@@ -166,16 +106,22 @@ jobs:
       - run: |
           ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
-      - run: ./ppkg install freebsd-${{ matrix.target-version }}-amd64/uctags --link-type=static-full
-      - run: ./ppkg pack    freebsd-${{ matrix.target-version }}-amd64/uctags
+      - if:  ${{ startsWith(matrix.target, 'openbsd') }}
+        run: ./ppkg install ${{ matrix.target }}/uctags --link-type=static-most
+
+      - if:  ${{ ! startsWith(matrix.target, 'openbsd') }}
+        run: ./ppkg install ${{ matrix.target }}/uctags --link-type=static-full
+
+      - run: ./ppkg pack    ${{ matrix.target }}/uctags
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---freebsd-${{ matrix.target-version }}-amd64-tar-xz
-          path: uctags-*-freebsd-${{ matrix.target-version }}-amd64.tar.xz
+          name: uctags---${{ matrix.target }}-tar-xz
+          path: uctags-*-${{ matrix.target }}.tar.xz
+
 
   macos:
-    needs: [check, freebsd-amd64]
+    needs: check
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
     runs-on: macos-14
@@ -203,9 +149,15 @@ jobs:
           name: uctags-macos${{ matrix.target-version }}-${{ matrix.target-arch }}-tar-xz
           path: uctags-*.tar.xz
 
-  linux-aarch64:
-    needs: [check, macos]
+
+  linux:
+    needs: check
     if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target-arch: [x86_64, aarch64]
 
     runs-on: ubuntu-latest
 
@@ -246,47 +198,25 @@ jobs:
           chmod +x run.sh
 
       # https://github.com/multiarch/qemu-user-static
-      - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-      - run: docker run -v $PWD:$PWD -w $PWD --name alpine arm64v8/alpine sh run.sh
+      - if: matrix.target-arch != x86_64
+        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+
+      - if: matrix.target-arch == x86_64
+        run: docker run -v $PWD:$PWD -w $PWD --name alpine         alpine sh run.sh
+
+      - if: matrix.target-arch == aarch64
+        run: docker run -v $PWD:$PWD -w $PWD --name alpine arm64v8/alpine sh run.sh
 
       - run: ls
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---linux-aarch64-tar-xz
-          path: uctags-*-linux-aarch64.tar.xz
-
-  linux-x86_64:
-    needs: [check, linux-aarch64]
-    if: needs.check.outputs.if-has-new-commit == 'yes'
-
-    runs-on: ubuntu-latest
-
-    container: alpine:3.16
-
-    steps:
-      - run: apk update
-      - run: apk add g++ libc-dev linux-headers
-
-      - run: wget https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
-      - run: chmod a+x ppkg
-      - run: ./ppkg setup
-      - run: ./ppkg update
-
-      - run: |
-          sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
-
-      - run: ./ppkg install uctags --link-type=static-full
-      - run: ./ppkg pack    uctags
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: uctags---linux-x86_64-tar-xz
-          path: uctags-*-linux-x86_64.tar.xz
+          name: uctags---linux-${{ matrix.target-arch }}-tar-xz
+          path: uctags-*-linux-${{ matrix.target-arch }}.tar.xz
 
 
   publish:
-    needs: [check, linux-x86_64]
+    needs: [check, manpages, bsd, macos, linux]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
     runs-on: ubuntu-latest
@@ -302,6 +232,19 @@ jobs:
           merge-multiple: true
 
       - run: ls -a
+
+      - name: repack
+        run: |
+          set -x
+
+          for FILENAME in uctags-*.tar.xz
+          do
+            DIR_NAME="${FILENAME%.tar.xz}"
+
+            tar xvf "$FILENAME"
+            tar xvf manpages.tar.xz -C "$DIR_NAME"
+            tar cJvf "$FILENAME" "$DIR_NAME"
+          done
 
       - run: |
           printf 'build-from: https://github.com/universal-ctags/ctags/tree/%s\n\n' ${{ needs.check.outputs.git-sha }} > notes.md
