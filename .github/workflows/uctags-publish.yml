@@ -204,7 +204,7 @@ jobs:
           run install -d ~/.abuild/
           run printf 'PACKAGER_PRIVKEY="%s"\n' "$PWD/leleliu008@gmail.com.rsa" > ~/.abuild/abuild.conf
 
-          run ./ppkg export.apk libzip -o .
+          run ./ppkg export.apk uctags -o .
 
           run cp leleliu008@gmail.com.rsa.pub /etc/apk/keys/
 
