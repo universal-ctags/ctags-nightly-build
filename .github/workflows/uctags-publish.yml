@@ -283,7 +283,7 @@ jobs:
       - run: ./ppkg setup
       - run: ./ppkg export.deb linux-musl-${{ matrix.target-arch }}/uctags -o .
 
-      - run: dpkg -i *.deb
+      - run: sudo dpkg -i *.deb
       - run: dpkg -L uctags
 
       - uses: actions/upload-artifact@v4
@@ -380,8 +380,8 @@ jobs:
 
           RUN pacman -Syy --noconfirm && \
               pacman -S sudo curl gcc fakeroot --noconfirm && \
-              groupadd --gid $GID leleliu008 && \
-              useradd  --gid $GID --uid $UID -m leleliu008 && \
+              groupadd --gid \$GID leleliu008 && \
+              useradd  --gid \$GID --uid \$UID -m leleliu008 && \
               echo 'leleliu008 ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
           USER leleliu008
