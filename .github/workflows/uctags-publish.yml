@@ -276,12 +276,12 @@ jobs:
           path: .
 
       - run: install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
-      - run: tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
+      - run: tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
 
       - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
       - run: chmod a+x ppkg
       - run: ./ppkg setup
-      - run: PPKG_XTRACE=1 ./ppkg export.deb linux-musl-${{ matrix.target-arch }}/uctags -o .
+      - run: ./ppkg export.deb linux-musl-${{ matrix.target-arch }}/uctags -o .
 
       - run: dpkg -i *.deb
       - run: dpkg -L uctags
@@ -311,10 +311,10 @@ jobs:
           name: uctags---linux-${{ matrix.target-arch }}-tar-xz
           path: .
 
-      - run: dnf -y install xz
+      - run: dnf -y install curl xz g++
 
       - run: install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
-      - run: tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
+      - run: tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
 
       - run: dnf -y install rpmdevtools rpmlint
 
@@ -359,7 +359,7 @@ jobs:
           set -e
 
           run install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
-          run tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
+          run tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
 
           run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
           run chmod a+x ppkg
@@ -375,16 +375,19 @@ jobs:
           cat > Dockerfile <<EOF
           FROM archlinux
 
+          ARG UID
+          ARG GID
+
           RUN pacman -Syy --noconfirm && \
               pacman -S sudo curl gcc fakeroot --noconfirm && \
-              groupadd --gid 1000 leleliu008 && \
-              useradd  --gid 1000 --uid 1000 -m leleliu008 && \
+              groupadd --gid $GID leleliu008 && \
+              useradd  --gid $GID --uid $UID -m leleliu008 && \
               echo 'leleliu008 ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
           USER leleliu008
           EOF
 
-      - run: docker build -t myarchlinux .
+      - run: docker build --build-arg UID=$(id -u) --build-arg GID=$(id -g) -t myarchlinux .
       - run: docker run -v $PWD:/home/leleliu008/w -w /home/leleliu008/w --name myarchlinux myarchlinux sh run.sh
 
       - uses: actions/upload-artifact@v4
@@ -420,7 +423,7 @@ jobs:
             DIR_NAME="${FILENAME%.tar.xz}"
 
             tar xvf "$FILENAME"
-            tar xvf manpages.tar.xz -C "$DIR_NAME"
+            tar xvf manpages.tar.xz -C "$DIR_NAME" --strip-components=1
             tar cJvf "$FILENAME" "$DIR_NAME"
           done
 
