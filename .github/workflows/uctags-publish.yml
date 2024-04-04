@@ -104,7 +104,7 @@ jobs:
       - run: ./ppkg update
 
       - run: |
-          ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
+          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
       - if:  ${{ startsWith(matrix.target, 'openbsd') }}
         run: ./ppkg install ${{ matrix.target }}/uctags --link-type=static-most
