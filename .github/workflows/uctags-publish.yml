@@ -193,6 +193,23 @@ jobs:
 
           run ./ppkg install uctags --link-type=static-full
           run ./ppkg pack    uctags
+
+          run apk add alpine-sdk
+
+          # https://wiki.alpinelinux.org/wiki/Include:Abuild-keygen
+          # https://github.com/alpinelinux/abuild/blob/master/abuild-keygen.in
+          run openssl genrsa -out leleliu008@gmail.com.rsa 2048
+          run openssl rsa     -in leleliu008@gmail.com.rsa -pubout -out leleliu008@gmail.com.rsa.pub
+
+          run install -d ~/.abuild/
+          run printf 'PACKAGER_PRIVKEY="%s"\n' "$PWD/leleliu008@gmail.com.rsa" > ~/.abuild/abuild.conf
+
+          run ./ppkg export.apk libzip -o .
+
+          run cp leleliu008@gmail.com.rsa.pub /etc/apk/keys/
+
+          run apk add *.apk
+          run apk info -L uctags
           EOF
 
           chmod +x run.sh
@@ -214,9 +231,152 @@ jobs:
           name: uctags---linux-${{ matrix.target-arch }}-tar-xz
           path: uctags-*-linux-${{ matrix.target-arch }}.tar.xz
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---linux-${{ matrix.target-arch }}-apk
+          path: uctags-*-linux-${{ matrix.target-arch }}.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rsa-public-key
+          path: leleliu008@gmail.com.rsa.pub
+
+
+  deb:
+    needs: [check, linux]
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target-arch: [x86_64, aarch64]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: uctags---linux-${{ matrix.target-arch }}-tar-xz
+          path: .
+
+      - run: install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
+      - run: tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
+
+      - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+      - run: chmod a+x ppkg
+      - run: ./ppkg setup
+      - run: ./ppkg export.deb linux-musl-${{ matrix.target-arch }}/uctags -o .
+
+      - run: dpkg -i *.deb
+      - run: dpkg -L uctags
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---linux-${{ matrix.target-arch }}-deb
+          path: uctags-*-linux-${{ matrix.target-arch }}.deb
+
+
+  rpm:
+    needs: [check, linux]
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target-arch: [x86_64, aarch64]
+
+    runs-on: ubuntu-latest
+
+    container: fedora
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: uctags---linux-${{ matrix.target-arch }}-tar-xz
+          path: .
+
+      - run: install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
+      - run: tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
+
+      - run: dnf -y install rpmdevtools rpmlint
+
+      - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+      - run: chmod a+x ppkg
+      - run: ./ppkg setup
+      - run: ./ppkg export.rpm linux-musl-${{ matrix.target-arch }}/uctags -o .
+
+      - run: rpm -i *.rpm
+      - run: rpm -ql uctags
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---${{ matrix.target-arch }}-rpm
+          path: uctags-*.${{ matrix.target-arch }}.rpm
+
+
+  pkg:
+    needs: [check, linux]
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target-arch: [x86_64, aarch64]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: uctags---linux-${{ matrix.target-arch }}-tar-xz
+          path: .
+
+      - run: |
+          cat > run.sh <<EOF
+          run() {
+            printf '%b\n' "\$*"
+            eval "\$@"
+          }
+
+          set -e
+
+          run install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
+          run tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
+
+          run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+          run chmod a+x ppkg
+
+          run ./ppkg setup
+          run ./ppkg export.pkg linux-musl-${{ matrix.target-arch }}/uctags
+
+          run sudo pacman -U --noconfirm *.pkg.tar.xz
+          run pacman -Qi uctags
+          EOF
+
+      - run: |
+          cat > Dockerfile <<EOF
+          FROM archlinux
+
+          RUN pacman -Syy --noconfirm && \
+              pacman -S sudo curl gcc fakeroot --noconfirm && \
+              groupadd --gid 1000 leleliu008 && \
+              useradd  --gid 1000 --uid 1000 -m leleliu008 && \
+              echo 'leleliu008 ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+
+          USER leleliu008
+          EOF
+
+      - run: docker build -t myarchlinux .
+      - run: docker run -v $PWD:/home/leleliu008/bin -w /home/leleliu008 --name myarchlinux myarchlinux sh bin/run.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---${{ matrix.target-arch }}-pkg
+          path: uctags-*-${{ matrix.target-arch }}.pkg.tar.xz
+
 
   publish:
-    needs: [check, manpages, bsd, macos, linux]
+    needs: [check, manpages, bsd, macos, linux, deb, rpm, pkg]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
     runs-on: ubuntu-latest
@@ -248,7 +408,7 @@ jobs:
 
       - run: |
           printf 'build-from: https://github.com/universal-ctags/ctags/tree/%s\n\n' ${{ needs.check.outputs.git-sha }} > notes.md
-          printf 'sha256sum:\n```\n%s\n```\n' "$(sha256sum uctags-*.tar.xz)" >> notes.md
+          printf 'sha256sum:\n```\n%s\n```\n' "$(sha256sum uctags-*.tar.xz *.deb *.rpm *.apk *.pkg.tar.xz *.rsa.pub)" >> notes.md
 
           VERSION="$(ls uctags-*-linux-x86_64.tar.xz | cut -d- -f2)"
           TAGNAME="$VERSION+${{ needs.check.outputs.git-sha }}"
@@ -257,4 +417,4 @@ jobs:
           git -c init.defaultBranch=master init
           git remote add origin ${{ github.repositoryUrl }}
 
-          gh release create "$TAGNAME" uctags-*.tar.xz --title "$TAGNAME" --notes-file notes.md
+          gh release create "$TAGNAME" uctags-*.tar.xz *.deb *.rpm *.apk *.pkg.tar.xz *.rsa.pub --title "$TAGNAME" --notes-file notes.md
