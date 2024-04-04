@@ -434,7 +434,7 @@ jobs:
 
       - run: |
           printf 'build-from: https://github.com/universal-ctags/ctags/tree/%s\n\n' ${{ needs.check.outputs.git-sha }} > notes.md
-          printf 'sha256sum:\n```\n%s\n```\n' "$(sha256sum uctags-*.tar.xz *.deb *.rpm *.apk *.pkg.tar.xz *.rsa.pub)" >> notes.md
+          printf 'sha256sum:\n```\n%s\n```\n' "$(sha256sum uctags-*.tar.xz *.deb *.rpm *.apk *.rsa.pub)" >> notes.md
 
           VERSION="$(ls uctags-*-linux-x86_64.tar.xz | cut -d- -f2)"
           TAGNAME="$VERSION+${{ needs.check.outputs.git-sha }}"
@@ -443,4 +443,4 @@ jobs:
           git -c init.defaultBranch=master init
           git remote add origin ${{ github.repositoryUrl }}
 
-          gh release create "$TAGNAME" uctags-*.tar.xz *.deb *.rpm *.apk *.pkg.tar.xz *.rsa.pub --title "$TAGNAME" --notes-file notes.md
+          gh release create "$TAGNAME" uctags-*.tar.xz *.deb *.rpm *.apk *.rsa.pub --title "$TAGNAME" --notes-file notes.md
