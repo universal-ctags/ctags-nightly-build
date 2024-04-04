@@ -420,11 +420,16 @@ jobs:
 
           for FILENAME in uctags-*.tar.xz
           do
-            DIR_NAME="${FILENAME%.tar.xz}"
+            case $FILENAME in
+              *.pkg.tar.xz)
+                ;;
+              *)
+                DIR_NAME="${FILENAME%.tar.xz}"
 
-            tar xvf "$FILENAME"
-            tar xvf manpages.tar.xz -C "$DIR_NAME" --strip-components=1
-            tar cJvf "$FILENAME" "$DIR_NAME"
+                tar xvf "$FILENAME"
+                tar xvf manpages.tar.xz -C "$DIR_NAME" --strip-components=1
+                tar cJvf "$FILENAME" "$DIR_NAME"
+            esac
           done
 
       - run: |
