@@ -20,22 +20,67 @@ If you are extreamly concerned about performance, building it on you local machi
 
 All dependent libraries including libc are statically-linked into the executable.
 
-Archive file structure:
+Tarball file structure:
 
 ```text
-uctags-2023.02.02-linux-x86_64
+uctags-2024.04.04-linux-x86_64
+├── .ppkg
+│   ├── formula
+│   │   ├── jansson.yml
+│   │   ├── libiconv.yml
+│   │   ├── libxml2.yml
+│   │   ├── libyaml.yml
+│   │   └── zlib.yml
+│   ├── COPYING
+│   ├── MANIFEST.txt
+│   ├── README.md
+│   ├── RECEIPT.yml
+│   ├── config.log
+│   ├── dependencies.box
+│   └── dependencies.dot
 ├── bin
 │   ├── ctags
 │   ├── optscript
 │   └── readtags
-└── .ppkg
-    ├── config.log
-    ├── COPYING
-    ├── dependencies.box
-    ├── dependencies.dot
-    ├── MANIFEST.txt
-    ├── README.md
-    └── RECEIPT.yml
+└── man
+    ├── man1
+    │   ├── ctags.1
+    │   └── readtags.1
+    ├── man5
+    │   ├── ctags-json-output.5
+    │   └── tags.5
+    └── man7
+        ├── ctags-client-tools.7
+        ├── ctags-faq.7
+        ├── ctags-incompatibilities.7
+        ├── ctags-lang-asm.7
+        ├── ctags-lang-autoit.7
+        ├── ctags-lang-automake.7
+        ├── ctags-lang-c++.7
+        ├── ctags-lang-c.7
+        ├── ctags-lang-cuda.7
+        ├── ctags-lang-elm.7
+        ├── ctags-lang-fortran.7
+        ├── ctags-lang-gdscript.7
+        ├── ctags-lang-i18nrubygem.7
+        ├── ctags-lang-iPythonCell.7
+        ├── ctags-lang-inko.7
+        ├── ctags-lang-javascript.7
+        ├── ctags-lang-julia.7
+        ├── ctags-lang-kconfig.7
+        ├── ctags-lang-ldscript.7
+        ├── ctags-lang-lex.7
+        ├── ctags-lang-markdown.7
+        ├── ctags-lang-python.7
+        ├── ctags-lang-r.7
+        ├── ctags-lang-rmarkdown.7
+        ├── ctags-lang-sql.7
+        ├── ctags-lang-systemtap.7
+        ├── ctags-lang-tcl.7
+        ├── ctags-lang-terraform.7
+        ├── ctags-lang-verilog.7
+        ├── ctags-lang-vim.7
+        └── ctags-optlib.7
 ```
 
 These archive files are created by [ppkg](https://github.com/leleliu008/ppkg), some extra files are shipped with the archive, which all are located in a hidden directory named `.ppkg`.
@@ -44,22 +89,67 @@ These archive files are created by [ppkg](https://github.com/leleliu008/ppkg), s
 
 All dependent libraries except `/usr/lib/libSystem.B.dylib` are statically-linked into the executable.
 
-Archive file structure:
+Tarball file structure:
 
 ```text
-uctags-2023.02.02-MacOSX11.0-arm64
+uctags-2024.04.04-macos-14.0-arm64
+├── .xcpkg
+│   ├── formula
+│   │   ├── jansson.yml
+│   │   ├── libiconv.yml
+│   │   ├── libxml2.yml
+│   │   ├── libyaml.yml
+│   │   └── zlib.yml
+│   ├── COPYING
+│   ├── MANIFEST.txt
+│   ├── README.md
+│   ├── RECEIPT.yml
+│   ├── config.log
+│   ├── dependencies.box
+│   └── dependencies.dot
 ├── bin
 │   ├── ctags
 │   ├── optscript
 │   └── readtags
-└── .xcpkg
-    ├── config.log
-    ├── COPYING
-    ├── dependencies.box
-    ├── dependencies.dot
-    ├── MANIFEST.txt
-    ├── README.md
-    └── RECEIPT.yml
+└── man
+    ├── man1
+    │   ├── ctags.1
+    │   └── readtags.1
+    ├── man5
+    │   ├── ctags-json-output.5
+    │   └── tags.5
+    └── man7
+        ├── ctags-client-tools.7
+        ├── ctags-faq.7
+        ├── ctags-incompatibilities.7
+        ├── ctags-lang-asm.7
+        ├── ctags-lang-autoit.7
+        ├── ctags-lang-automake.7
+        ├── ctags-lang-c++.7
+        ├── ctags-lang-c.7
+        ├── ctags-lang-cuda.7
+        ├── ctags-lang-elm.7
+        ├── ctags-lang-fortran.7
+        ├── ctags-lang-gdscript.7
+        ├── ctags-lang-i18nrubygem.7
+        ├── ctags-lang-iPythonCell.7
+        ├── ctags-lang-inko.7
+        ├── ctags-lang-javascript.7
+        ├── ctags-lang-julia.7
+        ├── ctags-lang-kconfig.7
+        ├── ctags-lang-ldscript.7
+        ├── ctags-lang-lex.7
+        ├── ctags-lang-markdown.7
+        ├── ctags-lang-python.7
+        ├── ctags-lang-r.7
+        ├── ctags-lang-rmarkdown.7
+        ├── ctags-lang-sql.7
+        ├── ctags-lang-systemtap.7
+        ├── ctags-lang-tcl.7
+        ├── ctags-lang-terraform.7
+        ├── ctags-lang-verilog.7
+        ├── ctags-lang-vim.7
+        └── ctags-optlib.7
 ```
 
 These archive files are created by [xcpkg](https://github.com/leleliu008/xcpkg), some extra files are shipped with the archive, which all are located in a hidden directory named `.xcpkg`.

@@ -50,6 +50,7 @@ jobs:
       if-has-new-commit: ${{ steps.check-if-has-new-commit.outputs.HAS_NEW_COMMIT }}
       git-sha:           ${{ steps.check-if-has-new-commit.outputs.GIT_SHA }}
 
+
   manpages:
     needs: check
     if: needs.check.outputs.if-has-new-commit == 'yes'
@@ -129,7 +130,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target-version: ['11.0', '12.0', '13.0', '14.0']
+        target-version: ['10.15', '11.0', '12.0', '13.0', '14.0']
         target-arch: [x86_64, arm64]
 
     steps:
@@ -306,31 +307,58 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    container: fedora
-
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: uctags---linux-${{ matrix.target-arch }}-tar-xz
           path: .
 
-      - run: dnf -y install curl xz g++
+      - run: |
+          cat > run.sh <<EOF
+          set -e
 
-      - run: install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
-      - run: tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
+          COLOR_GREEN='\033[0;32m'        # Green
+          COLOR_PURPLE='\033[0;35m'       # Purple
+          COLOR_OFF='\033[0m'             # Reset
 
-      - run: dnf -y install rpmdevtools rpmlint
+          echo() {
+              printf '%b\n' "\$*"
+          }
 
-      - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
-      - run: chmod a+x ppkg
-      - run: ./ppkg setup
-      - run: ./ppkg export.rpm linux-musl-${{ matrix.target-arch }}/uctags -o .
+          run() {
+              echo "\${COLOR_PURPLE}==>\${COLOR_OFF} \${COLOR_GREEN}\$@\${COLOR_OFF}"
+              eval "\$*"
+          }
+
+          run uname -a
+
+          run dnf -y install curl xz g++ rpmdevtools rpmlint
+
+          run install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
+          run tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
+
+          run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+          run chmod a+x ppkg
+          run ./ppkg setup
+          run ./ppkg export.rpm linux-musl-${{ matrix.target-arch }}/uctags -o .
+
+          run rpm -i *.rpm
+          run rpm -ql uctags
+          EOF
+
+          chmod +x run.sh
+
+      # https://github.com/multiarch/qemu-user-static
+      - if: matrix.target-arch != 'x86_64'
+        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
       - if: matrix.target-arch == 'x86_64'
-        run: rpm -i *.rpm
+        run: docker run -v $PWD:$PWD -w $PWD --name fedora         fedora sh run.sh
 
-      - if: matrix.target-arch == 'x86_64'
-        run: rpm -ql uctags
+      - if: matrix.target-arch == 'aarch64'
+        run: docker run -v $PWD:$PWD -w $PWD --name fedora arm64v8/fedora sh run.sh
+
+      - run: ls
 
       - uses: actions/upload-artifact@v4
         with:
@@ -345,7 +373,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target-arch: [x86_64, aarch64]
+        target-arch: [x86_64]
 
     runs-on: ubuntu-latest
 
@@ -373,10 +401,8 @@ jobs:
           run ./ppkg setup
           run ./ppkg export.pkg linux-musl-${{ matrix.target-arch }}/uctags
 
-          if [ ${{ matrix.target-arch }} == 'x86_64' ] ; then
-            run sudo pacman -U --noconfirm *.pkg.tar.xz
-            run pacman -Qi uctags
-          fi
+          run sudo pacman -U --noconfirm *.pkg.tar.xz
+          run pacman -Qi uctags
           EOF
 
       - run: |
