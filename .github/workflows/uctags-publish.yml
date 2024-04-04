@@ -202,7 +202,8 @@ jobs:
           run openssl rsa     -in leleliu008@gmail.com.rsa -pubout -out leleliu008@gmail.com.rsa.pub
 
           run install -d ~/.abuild/
-          run printf 'PACKAGER_PRIVKEY="%s"\n' "$PWD/leleliu008@gmail.com.rsa" > ~/.abuild/abuild.conf
+
+          printf 'PACKAGER_PRIVKEY="%s"\n' "$PWD/leleliu008@gmail.com.rsa" > ~/.abuild/abuild.conf
 
           run ./ppkg export.apk uctags -o .
 
