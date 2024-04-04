@@ -177,7 +177,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target-arch: [x86_64, aarch64]
+        target-arch: [x86_64]
 
     runs-on: ubuntu-latest
 
@@ -265,7 +265,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target-arch: [x86_64, aarch64]
+        target-arch: [x86_64]
 
     runs-on: ubuntu-latest
 
@@ -281,7 +281,7 @@ jobs:
       - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
       - run: chmod a+x ppkg
       - run: ./ppkg setup
-      - run: ./ppkg export.deb linux-musl-${{ matrix.target-arch }}/uctags -o .
+      - run: PPKG_XTRACE=1 ./ppkg export.deb linux-musl-${{ matrix.target-arch }}/uctags -o .
 
       - run: dpkg -i *.deb
       - run: dpkg -L uctags
@@ -299,7 +299,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target-arch: [x86_64, aarch64]
+        target-arch: [x86_64]
 
     runs-on: ubuntu-latest
 
@@ -310,6 +310,8 @@ jobs:
         with:
           name: uctags---linux-${{ matrix.target-arch }}-tar-xz
           path: .
+
+      - run: dnf -y install xz
 
       - run: install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
       - run: tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
@@ -337,7 +339,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target-arch: [x86_64, aarch64]
+        target-arch: [x86_64]
 
     runs-on: ubuntu-latest
 
@@ -383,7 +385,7 @@ jobs:
           EOF
 
       - run: docker build -t myarchlinux .
-      - run: docker run -v $PWD:/home/leleliu008/bin -w /home/leleliu008 --name myarchlinux myarchlinux sh bin/run.sh
+      - run: docker run -v $PWD:/home/leleliu008/w -w /home/leleliu008/w --name myarchlinux myarchlinux sh run.sh
 
       - uses: actions/upload-artifact@v4
         with:
