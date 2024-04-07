@@ -113,12 +113,15 @@ jobs:
       - if:  ${{ ! startsWith(matrix.target, 'openbsd') }}
         run: ./ppkg install ${{ matrix.target }}/uctags --link-type=static-full
 
-      - run: ./ppkg pack    ${{ matrix.target }}/uctags
+      - run: ./ppkg pack ${{ matrix.target }}/uctags -t tar.gz
+      - run: ./ppkg pack ${{ matrix.target }}/uctags -t tar.xz
+      - run: ./ppkg pack ${{ matrix.target }}/uctags -t tar.lz
+      - run: ./ppkg pack ${{ matrix.target }}/uctags -t tar.bz2
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---${{ matrix.target }}-tar-xz
-          path: uctags-*-${{ matrix.target }}.tar.xz
+          name: uctags---${{ matrix.target }}-tar
+          path: uctags-*-${{ matrix.target }}.tar.*
 
 
   macos:
@@ -134,21 +137,26 @@ jobs:
         target-arch: [x86_64, arm64]
 
     steps:
-      - run: curl -LO https://raw.githubusercontent.com/leleliu008/xcpkg/master/xcpkg
-      - run: chmod a+x xcpkg
-      - run: ./xcpkg setup
-      - run: ./xcpkg update
+      - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+      - run: chmod a+x ppkg
+
+      - run: ./ppkg setup
+      - run: ./ppkg update
 
       - run: |
-          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.xcpkg/repos.d/official-core/formula/uctags.yml
+          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
-      - run: ./xcpkg install MacOSX-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags --link-type=static-most
-      - run: ./xcpkg pack    MacOSX-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags
+      - run: ./ppkg install macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags --link-type=static-most
+
+      - run: ./ppkg pack    macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags -t tar.gz
+      - run: ./ppkg pack    macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags -t tar.xz
+      - run: ./ppkg pack    macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags -t tar.lz
+      - run: ./ppkg pack    macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags -t tar.bz2
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags-macos${{ matrix.target-version }}-${{ matrix.target-arch }}-tar-xz
-          path: uctags-*.tar.xz
+          name: uctags-macos-${{ matrix.target-version }}-${{ matrix.target-arch }}-tar
+          path: uctags-*.tar.*
 
 
   rsa:
@@ -218,7 +226,11 @@ jobs:
           sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
           run ./ppkg install uctags --link-type=static-full
-          run ./ppkg pack    uctags
+
+          run ./ppkg pack    uctags -t tar.gz
+          run ./ppkg pack    uctags -t tar.xz
+          run ./ppkg pack    uctags -t tar.lz
+          run ./ppkg pack    uctags -t tar.bz2
 
           run apk add alpine-sdk
 
@@ -250,8 +262,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---linux-${{ matrix.target-arch }}-tar-xz
-          path: uctags-*-linux-${{ matrix.target-arch }}.tar.xz
+          name: uctags---linux-${{ matrix.target-arch }}-tar
+          path: uctags-*-linux-${{ matrix.target-arch }}.tar.*
 
       - uses: actions/upload-artifact@v4
         with:
@@ -273,7 +285,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: uctags---linux-${{ matrix.target-arch }}-tar-xz
+          name: uctags---linux-${{ matrix.target-arch }}-tar
           path: .
 
       - run: install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
@@ -310,7 +322,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: uctags---linux-${{ matrix.target-arch }}-tar-xz
+          name: uctags---linux-${{ matrix.target-arch }}-tar
           path: .
 
       - run: |
@@ -380,7 +392,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: uctags---linux-${{ matrix.target-arch }}-tar-xz
+          name: uctags---linux-${{ matrix.target-arch }}-tar
           path: .
 
       - run: |
@@ -448,27 +460,38 @@ jobs:
 
       - run: ls -a
 
+      - run: sudo apt -y update
+      - run: sudo apt -y install lzip
+
       - name: repack
         run: |
           set -x
 
-          for FILENAME in uctags-*.tar.xz
+          for FILENAME in uctags-*.tar.*
           do
             case $FILENAME in
               *.pkg.tar.xz)
                 ;;
               *)
-                DIR_NAME="${FILENAME%.tar.xz}"
+                DIR_NAME="${FILENAME%.tar.*}"
 
                 tar xvf "$FILENAME"
                 tar xvf manpages.tar.xz -C "$DIR_NAME" --strip-components=1
-                tar cJvf "$FILENAME" "$DIR_NAME"
+
+                case $FILENAME in
+                  *.tar.gz)  FMT='--gzip'  ;;
+                  *.tar.lz)  FMT='--lzip'  ;;
+                  *.tar.xz)  FMT='--xz'    ;;
+                  *.tar.bz2) FMT='--bzip2' ;;
+                esac
+
+                tar -c -v "$FMT" -f "$FILENAME" "$DIR_NAME"
             esac
           done
 
       - run: |
           printf 'build-from: https://github.com/universal-ctags/ctags/tree/%s\n\n' ${{ needs.check.outputs.git-sha }} > notes.md
-          printf 'sha256sum:\n```\n%s\n```\n' "$(sha256sum uctags-*.tar.xz *.deb *.rpm *.apk *.rsa.pub)" >> notes.md
+          printf 'sha256sum:\n```\n%s\n```\n' "$(sha256sum uctags-*.tar.* *.deb *.rpm *.apk *.rsa.pub)" >> notes.md
 
           VERSION="$(ls uctags-*-linux-x86_64.tar.xz | cut -d- -f2)"
           TAGNAME="$VERSION+${{ needs.check.outputs.git-sha }}"
@@ -477,4 +500,4 @@ jobs:
           git -c init.defaultBranch=master init
           git remote add origin ${{ github.repositoryUrl }}
 
-          gh release create "$TAGNAME" uctags-*.tar.xz *.deb *.rpm *.apk *.rsa.pub --title "$TAGNAME" --notes-file notes.md
+          gh release create "$TAGNAME" uctags-*.tar.* *.deb *.rpm *.apk *.rsa.pub --title "$TAGNAME" --notes-file notes.md
