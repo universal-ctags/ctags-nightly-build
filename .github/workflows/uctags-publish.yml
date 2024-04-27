@@ -442,8 +442,36 @@ jobs:
           path: uctags-*-${{ matrix.target-arch }}.pkg.tar.xz
 
 
+  android:
+    needs: check
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    runs-on: ubuntu-latest
+
+    container: fpliu/ndk-pkg
+
+    steps:
+      - run: ndk-pkg setup
+      - run: ndk-pkg update
+
+      - run: |
+          printf "git-sha: ${{ needs.check.outputs.git-sha }}\n" >> ~/.ndk-pkg/repos.d/official-core/formula/uctags.yml
+
+      - run: ndk-pkg install android-34-arm64-v8a,armeabi-v7a,x86_64,x86/uctags --exe=fsle
+
+      - run: ndk-pkg pack    android-34-arm64-v8a/uctags   -o .
+      - run: ndk-pkg pack    android-34-armeabi-v7a/uctags -o .
+      - run: ndk-pkg pack    android-34-x86_64/uctags      -o .
+      - run: ndk-pkg pack    android-34-x86/uctags         -o .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---android
+          path: uctags-*-android-*.tar.*
+
+
   publish:
-    needs: [check, manpages, bsd, macos, linux, deb, rpm, pkg, rsa]
+    needs: [check, manpages, bsd, macos, android, linux, deb, rpm, pkg, rsa]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
     runs-on: ubuntu-latest
