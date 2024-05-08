@@ -315,7 +315,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target-arch: [x86_64, aarch64]
+        target-arch: [x86_64]
 
     runs-on: ubuntu-latest
 
