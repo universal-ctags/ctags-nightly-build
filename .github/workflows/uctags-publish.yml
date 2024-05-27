@@ -374,7 +374,7 @@ jobs:
           run cp uctags.rsa.pub /etc/apk/keys/
 
           run install -d ~/.abuild/
-          printf 'PACKAGER_PRIVKEY="%s"\n' "$PWD/uctags.rsa" > ~/.abuild/abuild.conf
+          printf 'PACKAGER_PRIVKEY="%s"\n' "\$PWD/uctags.rsa" > ~/.abuild/abuild.conf
 
           run install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
           run tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
@@ -387,13 +387,6 @@ jobs:
 
           run apk add *.apk
           run apk info -L uctags
-
-          X="$(ls uctags-*-linux-${{ matrix.target-arch }}.tar.xz)"
-          Y="${X%.tar.xz}"
-          Z="$Y.apk"
-
-          run mv *.apk "$Z"
-          run mv uctags.rsa.pub "$Z.rsa.pub"
           EOF
 
           chmod +x run.sh
@@ -409,6 +402,16 @@ jobs:
         run: docker run -v $PWD:$PWD -w $PWD --name fedora arm64v8/alpine sh run.sh
 
       - run: ls
+
+      - run: |
+          set -ex
+
+          X="$(ls uctags-*-linux-${{ matrix.target-arch }}.tar.xz)"
+          Y="${X%.tar.xz}"
+          Z="$Y.apk"
+
+          mv uctags-*.apk   "$Z"
+          mv uctags.rsa.pub "$Z.rsa.pub"
 
       - uses: actions/upload-artifact@v4
         with:
