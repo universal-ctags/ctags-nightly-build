@@ -374,7 +374,7 @@ jobs:
           run cp uctags.rsa.pub /etc/apk/keys/
 
           run install -d ~/.abuild/
-          printf 'PACKAGER_PRIVKEY="%s"\n' "$uctags.rsa" > ~/.abuild/abuild.conf
+          printf 'PACKAGER_PRIVKEY="%s"\n' "$PWD/uctags.rsa" > ~/.abuild/abuild.conf
 
           run install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
           run tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
