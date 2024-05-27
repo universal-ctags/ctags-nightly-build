@@ -115,8 +115,6 @@ jobs:
 
       - run: ./ppkg pack ${{ matrix.target }}/uctags -t tar.gz
       - run: ./ppkg pack ${{ matrix.target }}/uctags -t tar.xz
-      - run: ./ppkg pack ${{ matrix.target }}/uctags -t tar.lz
-      - run: ./ppkg pack ${{ matrix.target }}/uctags -t tar.bz2
 
       - uses: actions/upload-artifact@v4
         with:
@@ -150,8 +148,6 @@ jobs:
 
       - run: ./ppkg pack    macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags -t tar.gz
       - run: ./ppkg pack    macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags -t tar.xz
-      - run: ./ppkg pack    macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags -t tar.lz
-      - run: ./ppkg pack    macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags -t tar.bz2
 
       - uses: actions/upload-artifact@v4
         with:
@@ -159,28 +155,8 @@ jobs:
           path: uctags-*.tar.*
 
 
-  rsa:
-    needs: check
-    if: needs.check.outputs.if-has-new-commit == 'yes'
-
-    runs-on: ubuntu-latest
-
-    steps:
-        # https://wiki.alpinelinux.org/wiki/Include:Abuild-keygen
-        # https://github.com/alpinelinux/abuild/blob/master/abuild-keygen.in
-      - run: openssl genrsa -out leleliu008@gmail.com.rsa 2048
-      - run: openssl rsa     -in leleliu008@gmail.com.rsa -pubout -out leleliu008@gmail.com.rsa.pub
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: rsa-private+public-key
-          path: |
-            leleliu008@gmail.com.rsa
-            leleliu008@gmail.com.rsa.pub
-
-
   linux:
-    needs: [check, rsa]
+    needs: [check]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
     strategy:
@@ -191,11 +167,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: rsa-private+public-key
-          path: .
-
       - run: |
           cat > run.sh <<EOF
           set -e
@@ -229,21 +200,6 @@ jobs:
 
           run ./ppkg pack    uctags -t tar.gz
           run ./ppkg pack    uctags -t tar.xz
-          run ./ppkg pack    uctags -t tar.lz
-          run ./ppkg pack    uctags -t tar.bz2
-
-          run apk add alpine-sdk
-
-          run install -d ~/.abuild/
-
-          printf 'PACKAGER_PRIVKEY="%s"\n' "$PWD/leleliu008@gmail.com.rsa" > ~/.abuild/abuild.conf
-
-          run ./ppkg export.apk uctags -o .
-
-          run cp leleliu008@gmail.com.rsa.pub /etc/apk/keys/
-
-          run apk add *.apk
-          run apk info -L uctags
           EOF
 
           chmod +x run.sh
@@ -264,11 +220,6 @@ jobs:
         with:
           name: uctags---linux-${{ matrix.target-arch }}-tar
           path: uctags-*-linux-${{ matrix.target-arch }}.tar.*
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: uctags---linux-${{ matrix.target-arch }}-apk
-          path: uctags-*.apk
 
 
   deb:
@@ -378,6 +329,98 @@ jobs:
           path: uctags-*.${{ matrix.target-arch }}.rpm
 
 
+  apk:
+    needs: [check, linux]
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target-arch: [x86_64, aarch64]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: uctags---linux-${{ matrix.target-arch }}-tar
+          path: .
+
+      - run: |
+          cat > run.sh <<EOF
+          set -e
+
+          COLOR_GREEN='\033[0;32m'        # Green
+          COLOR_PURPLE='\033[0;35m'       # Purple
+          COLOR_OFF='\033[0m'             # Reset
+
+          echo() {
+              printf '%b\n' "\$*"
+          }
+
+          run() {
+              echo "\${COLOR_PURPLE}==>\${COLOR_OFF} \${COLOR_GREEN}\$@\${COLOR_OFF}"
+              eval "\$*"
+          }
+
+          run uname -a
+
+          run apk update
+          run apk add xz alpine-sdk
+
+          run openssl genrsa -out uctags.rsa 2048
+          run openssl rsa     -in uctags.rsa -pubout -out uctags.rsa.pub
+
+          run cp uctags.rsa.pub /etc/apk/keys/
+
+          run install -d ~/.abuild/
+          printf 'PACKAGER_PRIVKEY="%s"\n' "$uctags.rsa" > ~/.abuild/abuild.conf
+
+          run install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
+          run tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
+
+          run wget https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+          run chmod a+x ppkg
+          run ./ppkg setup
+
+          run ./ppkg export.apk uctags -o .
+
+          run apk add *.apk
+          run apk info -L uctags
+
+          X="$(ls uctags-*-linux-${{ matrix.target-arch }}.tar.xz)"
+          Y="${X%.tar.xz}"
+          Z="$Y.apk"
+
+          run mv *.apk "$Z"
+          run mv uctags.rsa.pub "$Z.rsa.pub"
+          EOF
+
+          chmod +x run.sh
+
+      # https://github.com/multiarch/qemu-user-static
+      - if: matrix.target-arch != 'x86_64'
+        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+
+      - if: matrix.target-arch == 'x86_64'
+        run: docker run -v $PWD:$PWD -w $PWD --name fedora         alpine sh run.sh
+
+      - if: matrix.target-arch == 'aarch64'
+        run: docker run -v $PWD:$PWD -w $PWD --name fedora arm64v8/alpine sh run.sh
+
+      - run: ls
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---${{ matrix.target-arch }}-apk
+          path: uctags-*.${{ matrix.target-arch }}.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---${{ matrix.target-arch }}-apk-rsa-pub
+          path: uctags-*.${{ matrix.target-arch }}.apk.rsa.pub
+
+
   pkg:
     needs: [check, linux]
     if: needs.check.outputs.if-has-new-commit == 'yes'
@@ -459,10 +502,10 @@ jobs:
 
       - run: ndk-pkg install android-34-arm64-v8a,armeabi-v7a,x86_64,x86/uctags --fsle
 
-      - run: ndk-pkg pack    android-34-arm64-v8a/uctags   -o .
-      - run: ndk-pkg pack    android-34-armeabi-v7a/uctags -o .
-      - run: ndk-pkg pack    android-34-x86_64/uctags      -o .
-      - run: ndk-pkg pack    android-34-x86/uctags         -o .
+      - run: ndk-pkg pack    android-34-arm64-v8a/uctags
+      - run: ndk-pkg pack    android-34-armeabi-v7a/uctags
+      - run: ndk-pkg pack    android-34-x86_64/uctags
+      - run: ndk-pkg pack    android-34-x86/uctags
 
       - uses: actions/upload-artifact@v4
         with:
@@ -471,7 +514,7 @@ jobs:
 
 
   publish:
-    needs: [check, manpages, bsd, macos, android, linux, deb, rpm, pkg, rsa]
+    needs: [check, manpages, bsd, macos, android, linux, deb, rpm, apk, pkg]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
     runs-on: ubuntu-latest
@@ -487,9 +530,6 @@ jobs:
           merge-multiple: true
 
       - run: ls -a
-
-      - run: sudo apt -y update
-      - run: sudo apt -y install lzip
 
       - name: repack
         run: |
@@ -508,9 +548,7 @@ jobs:
 
                 case $FILENAME in
                   *.tar.gz)  FMT='--gzip'  ;;
-                  *.tar.lz)  FMT='--lzip'  ;;
                   *.tar.xz)  FMT='--xz'    ;;
-                  *.tar.bz2) FMT='--bzip2' ;;
                 esac
 
                 tar -c -v "$FMT" -f "$FILENAME" "$DIR_NAME"
