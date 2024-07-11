@@ -35,14 +35,15 @@ Tarball file structure:
 ```text
 uctags-2024.04.04-linux-x86_64
 ├── .ppkg
-│   ├── formula
-│   │   ├── jansson.yml
+│   ├── dependencies
 │   │   ├── libiconv.yml
+│   │   ├── libjansson.yml
 │   │   ├── libxml2.yml
 │   │   ├── libyaml.yml
-│   │   └── zlib.yml
+│   │   └── libz.yml
 │   ├── COPYING
 │   ├── MANIFEST.txt
+│   ├── NEWS.rst
 │   ├── README.md
 │   ├── RECEIPT.yml
 │   ├── config.log
