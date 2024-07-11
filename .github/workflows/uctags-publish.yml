@@ -108,10 +108,10 @@ jobs:
           ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
       - if:  ${{ startsWith(matrix.target, 'openbsd') }}
-        run: ./ppkg install ${{ matrix.target }}/uctags --link-type=static-most
+        run: ./ppkg install ${{ matrix.target }}/uctags
 
       - if:  ${{ ! startsWith(matrix.target, 'openbsd') }}
-        run: ./ppkg install ${{ matrix.target }}/uctags --link-type=static-full
+        run: ./ppkg install ${{ matrix.target }}/uctags --static
 
       - run: ./ppkg pack ${{ matrix.target }}/uctags -t tar.gz
       - run: ./ppkg pack ${{ matrix.target }}/uctags -t tar.xz
@@ -144,8 +144,7 @@ jobs:
       - run: |
           ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
-      - run: ./ppkg install macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags --link-type=static-most
-
+      - run: ./ppkg install macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags
       - run: ./ppkg pack    macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags -t tar.gz
       - run: ./ppkg pack    macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags -t tar.xz
 
@@ -196,8 +195,7 @@ jobs:
 
           sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
-          run ./ppkg install uctags --link-type=static-full
-
+          run ./ppkg install uctags --static
           run ./ppkg pack    uctags -t tar.gz
           run ./ppkg pack    uctags -t tar.xz
           EOF
