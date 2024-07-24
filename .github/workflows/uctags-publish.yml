@@ -469,7 +469,7 @@ jobs:
           ARG GID
 
           RUN pacman -Syy --noconfirm && \
-              pacman -S sudo curl openssl gcc fakeroot --noconfirm && \
+              pacman -S sudo curl openssl gcc fakeroot base-devel --noconfirm && \
               groupadd --gid \$GID leleliu008 && \
               useradd  --gid \$GID --uid \$UID -m leleliu008 && \
               echo 'leleliu008 ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
