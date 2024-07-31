@@ -96,7 +96,7 @@ jobs:
         # https://ftp.netbsd.org/pub/NetBSD/
         # https://cdn.openbsd.org/pub/OpenBSD/
         # https://archive.freebsd.org/old-releases/amd64/
-        target: ['netbsd-10.0-amd64', 'netbsd-9.4-amd64', 'netbsd-9.3-amd64', 'netbsd-9.2-amd64', 'openbsd-7.5-amd64', 'openbsd-7.4-amd64', 'openbsd-7.3-amd64', 'freebsd-14.1-amd64', 'freebsd-14.0-amd64', 'freebsd-13.0-amd64', 'freebsd-13.2-amd64', 'freebsd-13.1-amd64', 'freebsd-13.0-amd64']
+        target: ['netbsd-10.0-amd64', 'netbsd-9.4-amd64', 'netbsd-9.3-amd64', 'netbsd-9.2-amd64', 'openbsd-7.5-amd64', 'openbsd-7.4-amd64', 'openbsd-7.3-amd64', 'freebsd-14.1-amd64', 'freebsd-14.0-amd64', 'freebsd-13.3-amd64', 'freebsd-13.2-amd64', 'freebsd-13.1-amd64', 'freebsd-13.0-amd64']
 
     steps:
       - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
