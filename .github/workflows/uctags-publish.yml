@@ -84,6 +84,48 @@ jobs:
           name: manpages
           path: manpages.tar.xz
 
+  dragonflybsd:
+    needs: [check]
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['6.4']
+
+    steps:
+      - uses: vmactions/dragonflybsd-vm@v1
+        with:
+          release: "${{ matrix.version }}.0"
+          usesh: true
+          sync: rsync
+          copyback: true
+          run: |
+            run() {
+              printf "\033[0;35m==>\033[0m \033[0;32m%b\n\033[0m" "$*"
+              eval "$@"
+            }
+
+            run pkg install -y curl libnghttp2 gcc
+
+            curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+            chmod a+x ppkg
+            ./ppkg setup --syspm
+            ./ppkg update
+            ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
+            ./ppkg install dragonflybsd-${{ matrix.version }}-x86_64/uctags
+            ./ppkg install dragonflybsd-${{ matrix.version }}-x86_64/uctags --static
+            ./ppkg pack    dragonflybsd-${{ matrix.version }}-x86_64/uctags -t tar.gz
+            ./ppkg pack    dragonflybsd-${{ matrix.version }}-x86_64/uctags -t tar.xz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---dragonflybsd-${{ matrix.version }}-x86_64-tar
+          path: uctags-*-dragonflybsd-${{ matrix.version }}-x86_64.tar.*
+
+
   bsd:
     needs: [check]
     if: needs.check.outputs.if-has-new-commit == 'yes'
@@ -522,7 +564,7 @@ jobs:
 
 
   publish:
-    needs: [check, manpages, bsd, macos, android, linux, deb, rpm, apk, pkg]
+    needs: [check, manpages, dragonflybsd, bsd, macos, android, linux, deb, rpm, apk, pkg]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
     runs-on: ubuntu-latest
