@@ -84,6 +84,7 @@ jobs:
           name: manpages
           path: manpages.tar.xz
 
+
   dragonflybsd:
     needs: [check]
     if: needs.check.outputs.if-has-new-commit == 'yes'
@@ -115,7 +116,6 @@ jobs:
             ./ppkg setup --syspm
             ./ppkg update
             ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
-            ./ppkg install dragonflybsd-${{ matrix.version }}-x86_64/uctags
             ./ppkg install dragonflybsd-${{ matrix.version }}-x86_64/uctags --static
             ./ppkg pack    dragonflybsd-${{ matrix.version }}-x86_64/uctags -t tar.gz
             ./ppkg pack    dragonflybsd-${{ matrix.version }}-x86_64/uctags -t tar.xz
