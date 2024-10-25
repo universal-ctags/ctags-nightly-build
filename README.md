@@ -4,7 +4,7 @@ build [Universal Ctags](https://github.com/universal-ctags/ctags) every night vi
 
 ## Notes
 
-This repository only provides snapshot prebuilt binaries for `macOS`, `Linux`, `FreeBSD`, `OpenBSD`, `NetBSD`, they're not regular releases.
+This repository only provides snapshot prebuilt binaries for `macOS`, `Linux`, `DragonFlyBSD`, `FreeBSD`, `OpenBSD`, `NetBSD`, they're not regular releases.
 
 If you need prebuilt binaries for `Windows`, please go to [ctags-win32](https://github.com/universal-ctags/ctags-win32)
 
@@ -16,7 +16,7 @@ If you are extreamly concerned about performance, building it on you local machi
 
 ![dependencies](uctags-dependencies.svg)
 
-## for `Linux`, `FreeBSD`, `OpenBSD`, `NetBSD`
+## for `Linux`, `Android`, `DragonFlyBSD`, `FreeBSD`, `OpenBSD`, `NetBSD`
 
 All dependent libraries including libc are statically linked into the executable.
 
