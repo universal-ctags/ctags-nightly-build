@@ -4,7 +4,7 @@ build [Universal Ctags](https://github.com/universal-ctags/ctags) every night vi
 
 ## Notes
 
-This repository only provides snapshot prebuilt binaries for `macOS`, `Linux`, `DragonFlyBSD`, `FreeBSD`, `OpenBSD`, `NetBSD`, they're not regular releases.
+This repository only provides snapshot prebuilt binaries for `macOS`, `Linux`, `Android`, `DragonFlyBSD`, `FreeBSD`, `OpenBSD`, `NetBSD`, they're not regular releases.
 
 If you need prebuilt binaries for `Windows`, please go to [ctags-win32](https://github.com/universal-ctags/ctags-win32)
 
