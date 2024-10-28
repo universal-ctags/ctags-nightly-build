@@ -109,16 +109,20 @@ jobs:
               eval "$@"
             }
 
+            set -e
+
             run pkg install -y curl libnghttp2 gcc
 
-            curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
-            chmod a+x ppkg
-            ./ppkg setup --syspm
-            ./ppkg update
+            run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+            run chmod a+x ppkg
+            run ./ppkg setup
+            run ./ppkg update
+
             ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
-            ./ppkg install dragonflybsd-${{ matrix.version }}-x86_64/uctags --static
-            ./ppkg pack    dragonflybsd-${{ matrix.version }}-x86_64/uctags -t tar.gz
-            ./ppkg pack    dragonflybsd-${{ matrix.version }}-x86_64/uctags -t tar.xz
+
+            run ./ppkg install dragonflybsd-${{ matrix.version }}-x86_64/uctags --static
+            run ./ppkg pack    dragonflybsd-${{ matrix.version }}-x86_64/uctags -t tar.gz
+            run ./ppkg pack    dragonflybsd-${{ matrix.version }}-x86_64/uctags -t tar.xz
 
       - uses: actions/upload-artifact@v4
         with:
