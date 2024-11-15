@@ -450,10 +450,10 @@ jobs:
         run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
       - if: matrix.target-arch == 'x86_64'
-        run: docker run -v $PWD:$PWD -w $PWD --name fedora         alpine sh run.sh
+        run: docker run -v $PWD:$PWD -w $PWD --name fedora         alpine:3.16 sh run.sh
 
       - if: matrix.target-arch == 'aarch64'
-        run: docker run -v $PWD:$PWD -w $PWD --name fedora arm64v8/alpine sh run.sh
+        run: docker run -v $PWD:$PWD -w $PWD --name fedora arm64v8/alpine:3.16 sh run.sh
 
       - run: ls
 
