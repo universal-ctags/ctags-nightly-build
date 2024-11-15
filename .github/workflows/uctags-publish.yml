@@ -207,7 +207,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target-arch: [x86_64, aarch64, ppc64le, riscv64, s390x]
+        #target-arch: [x86_64, aarch64, ppc64le, riscv64, s390x]
+        target-arch: [x86_64, aarch64, ppc64le, s390x]
 
     runs-on: ubuntu-latest
 
@@ -253,19 +254,19 @@ jobs:
         run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
       - if: matrix.target-arch == 'x86_64'
-        run: docker run -v $PWD:/root -w /root --name alpine         alpine sh run.sh
+        run: docker run -v $PWD:/root -w /root --name alpine         alpine:3.16 sh run.sh
 
       - if: matrix.target-arch == 'aarch64'
-        run: docker run -v $PWD:/root -w /root --name alpine arm64v8/alpine sh run.sh
+        run: docker run -v $PWD:/root -w /root --name alpine arm64v8/alpine:3.16 sh run.sh
 
       - if: matrix.target-arch == 'ppc64le'
-        run: docker run -v $PWD:/root -w /root --name alpine ppc64le/alpine sh run.sh
+        run: docker run -v $PWD:/root -w /root --name alpine ppc64le/alpine:3.16 sh run.sh
 
       - if: matrix.target-arch == 'riscv64'
-        run: docker run -v $PWD:/root -w /root --name alpine riscv64/alpine sh run.sh
+        run: docker run -v $PWD:/root -w /root --name alpine riscv64/alpine:3.16 sh run.sh
 
       - if: matrix.target-arch == 's390x'
-        run: docker run -v $PWD:/root -w /root --name alpine   s390x/alpine sh run.sh
+        run: docker run -v $PWD:/root -w /root --name alpine   s390x/alpine:3.16 sh run.sh
 
       - run: ls
 
