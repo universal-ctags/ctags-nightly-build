@@ -276,6 +276,56 @@ jobs:
           path: uctags-*-linux-${{ matrix.target-arch }}.tar.*
 
 
+  linux-riscv64:
+    needs: [check]
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: |
+          cat > run.sh <<EOF
+          set -ex
+
+          export GITHUB_ACTIONS=true
+
+          COLOR_GREEN='\033[0;32m'        # Green
+          COLOR_PURPLE='\033[0;35m'       # Purple
+          COLOR_OFF='\033[0m'             # Reset
+
+          echo() {
+              printf '%b\n' "\$*"
+          }
+
+          run() {
+              echo "\${COLOR_PURPLE}==>\${COLOR_OFF} \${COLOR_GREEN}\$@\${COLOR_OFF}"
+              eval "\$*"
+          }
+
+          run uname -a
+          run id
+          run pwd
+
+          run wget https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+          run chmod a+x ppkg
+          run ./ppkg setup
+          run ./ppkg update
+          run ./ppkg install uctags --static
+          run ./ppkg pack    uctags -t tar.gz
+          run ./ppkg pack    uctags -t tar.xz
+          EOF
+
+      - run: curl -LO https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/master/alpine-chroot-install
+      - run: chmod +x alpine-chroot-install
+      - run: sudo ./alpine-chroot-install -d /alpine -a riscv64 -p wget -p g++
+      - run: /alpine/enter-chroot sh run.sh
+      - run: /alpine/destroy
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---linux-riscv64-tar
+          path: uctags-*-linux-riscv64.tar.*
+
   deb:
     needs: [check, linux]
     if: needs.check.outputs.if-has-new-commit == 'yes'
@@ -578,7 +628,7 @@ jobs:
 
 
   publish:
-    needs: [check, manpages, dragonflybsd, bsd, macos, android, linux, deb, rpm, apk, pkg]
+    needs: [check, manpages, dragonflybsd, bsd, macos, android, linux, linux-riscv64, deb, rpm, apk, pkg]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
     runs-on: ubuntu-latest
