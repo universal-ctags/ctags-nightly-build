@@ -95,6 +95,7 @@ jobs:
       fail-fast: false
       matrix:
         version: ['6.4']
+        profile: [debug, release]
 
     steps:
       - uses: vmactions/dragonflybsd-vm@v1
@@ -120,14 +121,14 @@ jobs:
 
             ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
-            run ./ppkg install dragonflybsd-${{ matrix.version }}-x86_64/uctags --static
+            run ./ppkg install dragonflybsd-${{ matrix.version }}-x86_64/uctags --static --profile=${{ matrix.profile }}
             run ./ppkg pack    dragonflybsd-${{ matrix.version }}-x86_64/uctags -t tar.gz
             run ./ppkg pack    dragonflybsd-${{ matrix.version }}-x86_64/uctags -t tar.xz
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---dragonflybsd-${{ matrix.version }}-x86_64-tar
-          path: uctags-*-dragonflybsd-${{ matrix.version }}-x86_64.tar.*
+          name: uctags---dragonflybsd-${{ matrix.version }}-x86_64-${{ matrix.profile }}.${{ matrix.profile }}.tar
+          path: uctags-*-dragonflybsd-${{ matrix.version }}-x86_64.${{ matrix.profile }}.${{ matrix.profile }}.tar.*
 
 
   bsd:
@@ -139,6 +140,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        profile: [debug, release]
         # https://ftp.netbsd.org/pub/NetBSD/
         # https://cdn.openbsd.org/pub/OpenBSD/
         # https://archive.freebsd.org/old-releases/amd64/
@@ -154,18 +156,18 @@ jobs:
           ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
       - if:  ${{ startsWith(matrix.target, 'openbsd') }}
-        run: ./ppkg install ${{ matrix.target }}/uctags
+        run: ./ppkg install ${{ matrix.target }}/uctags --profile=${{ matrix.profile }}
 
       - if:  ${{ ! startsWith(matrix.target, 'openbsd') }}
-        run: ./ppkg install ${{ matrix.target }}/uctags --static
+        run: ./ppkg install ${{ matrix.target }}/uctags --profile=${{ matrix.profile }} --static
 
       - run: ./ppkg pack ${{ matrix.target }}/uctags -t tar.gz
       - run: ./ppkg pack ${{ matrix.target }}/uctags -t tar.xz
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---${{ matrix.target }}-tar
-          path: uctags-*-${{ matrix.target }}.tar.*
+          name: uctags---${{ matrix.target }}.${{ matrix.profile }}.tar
+          path: uctags-*-${{ matrix.target }}.${{ matrix.profile }}.tar.*
 
 
   macos:
@@ -179,6 +181,7 @@ jobs:
       matrix:
         target-version: ['10.15', '11.0', '12.0', '13.0', '14.0', '15.0']
         target-arch: [x86_64, arm64]
+        profile: [debug, release]
 
     steps:
       - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
@@ -190,13 +193,13 @@ jobs:
       - run: |
           ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
-      - run: ./ppkg install macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags
+      - run: ./ppkg install macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags --profile=${{ matrix.profile }}
       - run: ./ppkg pack    macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags -t tar.gz
       - run: ./ppkg pack    macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags -t tar.xz
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags-macos-${{ matrix.target-version }}-${{ matrix.target-arch }}-tar
+          name: uctags-macos-${{ matrix.target-version }}-${{ matrix.target-arch }}.${{ matrix.profile }}.tar
           path: uctags-*.tar.*
 
 
@@ -209,6 +212,7 @@ jobs:
       matrix:
         #target-arch: [x86_64, aarch64, ppc64le, riscv64, s390x]
         target-arch: [x86_64, aarch64, ppc64le, s390x]
+        profile: [debug, release]
 
     runs-on: ubuntu-latest
 
@@ -244,7 +248,7 @@ jobs:
 
           sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
-          run ./ppkg install uctags --static
+          run ./ppkg install uctags --static --profile=${{ matrix.profile }}
           run ./ppkg pack    uctags -t tar.gz
           run ./ppkg pack    uctags -t tar.xz
           EOF
@@ -274,8 +278,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---linux-${{ matrix.target-arch }}-tar
-          path: uctags-*-linux-${{ matrix.target-arch }}.tar.*
+          name: uctags---linux-${{ matrix.target-arch }}.${{ matrix.profile }}.tar
+          path: uctags-*-linux-${{ matrix.target-arch }}.${{ matrix.profile }}.tar.*
 
 
   linux-riscv64:
@@ -283,6 +287,11 @@ jobs:
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [debug, release]
 
     steps:
       - run: |
@@ -312,7 +321,7 @@ jobs:
           run chmod a+x ppkg
           run ./ppkg setup
           run ./ppkg update
-          run ./ppkg install uctags --static
+          run ./ppkg install uctags --static --profile=${{ matrix.profile }}
           run ./ppkg pack    uctags -t tar.gz
           run ./ppkg pack    uctags -t tar.xz
           EOF
@@ -325,8 +334,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---linux-riscv64-tar
-          path: uctags-*-linux-riscv64.tar.*
+          name: uctags---linux-riscv64.${{ matrix.profile }}.tar
+          path: uctags-*-linux-riscv64.${{ matrix.profile }}.tar.*
 
   deb:
     needs: [check, linux]
@@ -342,7 +351,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: uctags---linux-${{ matrix.target-arch }}-tar
+          name: uctags---linux-${{ matrix.target-arch }}.release.tar
           path: .
 
       - run: install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
@@ -379,7 +388,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: uctags---linux-${{ matrix.target-arch }}-tar
+          name: uctags---linux-${{ matrix.target-arch }}.release.tar
           path: .
 
       - run: |
@@ -449,7 +458,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: uctags---linux-${{ matrix.target-arch }}-tar
+          name: uctags---linux-${{ matrix.target-arch }}.release.tar
           path: .
 
       - run: |
@@ -544,7 +553,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: uctags---linux-${{ matrix.target-arch }}-tar
+          name: uctags---linux-${{ matrix.target-arch }}.release.tar
           path: .
 
       - run: |
@@ -602,6 +611,11 @@ jobs:
 
     container: ubuntu:24.04
 
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [debug, release]
+
     steps:
       - run: apt -y update
       - run: apt -y install curl
@@ -616,7 +630,7 @@ jobs:
       - run: |
           printf "git-sha: ${{ needs.check.outputs.git-sha }}\n" >> ~/.ndk-pkg/repos.d/official-core/formula/uctags.yml
 
-      - run: ./ndk-pkg install android-35-arm64-v8a,armeabi-v7a,x86_64,x86/uctags --static
+      - run: ./ndk-pkg install android-35-arm64-v8a,armeabi-v7a,x86_64,x86/uctags --static --profile=${{ matrix.profile }}
 
       - run: ./ndk-pkg pack    android-35-arm64-v8a/uctags
       - run: ./ndk-pkg pack    android-35-armeabi-v7a/uctags
@@ -675,7 +689,7 @@ jobs:
           printf 'build-from: https://github.com/universal-ctags/ctags/tree/%s\n\n' ${{ needs.check.outputs.git-sha }} > notes.md
           printf 'sha256sum:\n```\n%s\n```\n' "$(sha256sum uctags-*.tar.* *.deb *.rpm *.apk *.rsa.pub)" >> notes.md
 
-          VERSION="$(ls uctags-*-linux-x86_64.tar.xz | cut -d- -f2)"
+          VERSION="$(ls uctags-*-linux-x86_64.release.tar.xz | cut -d- -f2)"
           TAGNAME="$VERSION+${{ needs.check.outputs.git-sha }}"
 
           # to avaid: failed to run git: fatal: not a git repository (or any of the parent directories): .git
