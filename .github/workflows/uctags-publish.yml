@@ -521,7 +521,7 @@ jobs:
       - run: |
           set -ex
 
-          X="$(ls uctags-*-linux-${{ matrix.target-arch }}.tar.xz)"
+          X="$(ls uctags-*-linux-${{ matrix.target-arch }}.release.tar.xz)"
           Y="${X%.tar.xz}"
           Z="$Y.apk"
 
