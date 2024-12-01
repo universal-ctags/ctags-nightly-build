@@ -127,8 +127,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---dragonflybsd-${{ matrix.version }}-x86_64-${{ matrix.profile }}.${{ matrix.profile }}.tar
-          path: uctags-*-dragonflybsd-${{ matrix.version }}-x86_64.${{ matrix.profile }}.${{ matrix.profile }}.tar.*
+          name: uctags---dragonflybsd-${{ matrix.version }}-x86_64-${{ matrix.profile }}.tar
+          path: uctags-*-dragonflybsd-${{ matrix.version }}-x86_64.${{ matrix.profile }}.tar.*
 
 
   bsd:
@@ -355,7 +355,7 @@ jobs:
           path: .
 
       - run: install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
-      - run: tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
+      - run: tar xvf uctags-*-linux-${{ matrix.target-arch }}.release.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
 
       - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
       - run: chmod a+x ppkg
@@ -413,7 +413,7 @@ jobs:
           run dnf -y install curl xz g++ rpmdevtools rpmlint
 
           run install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
-          run tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
+          run tar xvf uctags-*-linux-${{ matrix.target-arch }}.release.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
 
           run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
           run chmod a+x ppkg
@@ -492,7 +492,7 @@ jobs:
           printf 'PACKAGER_PRIVKEY="%s"\n' "\$PWD/uctags.rsa" > ~/.abuild/abuild.conf
 
           run install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
-          run tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
+          run tar xvf uctags-*-linux-${{ matrix.target-arch }}.release.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
 
           run wget https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
           run chmod a+x ppkg
@@ -566,7 +566,7 @@ jobs:
           set -e
 
           run install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
-          run tar xvf uctags-*-linux-${{ matrix.target-arch }}.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
+          run tar xvf uctags-*-linux-${{ matrix.target-arch }}.release.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
 
           run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
           run chmod a+x ppkg
