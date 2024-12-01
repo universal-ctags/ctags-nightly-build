@@ -530,13 +530,13 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---${{ matrix.target-arch }}-apk
-          path: uctags-*-${{ matrix.target-arch }}.apk
+          name: uctags---${{ matrix.target-arch }}.release.apk
+          path: uctags-*-${{ matrix.target-arch }}.release.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---${{ matrix.target-arch }}-apk-rsa-pub
-          path: uctags-*-${{ matrix.target-arch }}.apk.rsa.pub
+          name: uctags---${{ matrix.target-arch }}.release.apk.rsa.pub
+          path: uctags-*-${{ matrix.target-arch }}.release.apk.rsa.pub
 
 
   pkg:
