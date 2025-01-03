@@ -122,8 +122,8 @@ jobs:
             ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
             run ./ppkg install dragonflybsd-${{ matrix.version }}-x86_64/uctags --static --profile=${{ matrix.profile }}
-            run ./ppkg pack    dragonflybsd-${{ matrix.version }}-x86_64/uctags -t tar.gz
-            run ./ppkg pack    dragonflybsd-${{ matrix.version }}-x86_64/uctags -t tar.xz
+            run ./ppkg bundle  dragonflybsd-${{ matrix.version }}-x86_64/uctags .tar.gz
+            run ./ppkg bundle  dragonflybsd-${{ matrix.version }}-x86_64/uctags .tar.xz
 
       - uses: actions/upload-artifact@v4
         with:
@@ -161,8 +161,8 @@ jobs:
       - if:  ${{ ! startsWith(matrix.target, 'openbsd') }}
         run: ./ppkg install ${{ matrix.target }}/uctags --profile=${{ matrix.profile }} --static
 
-      - run: ./ppkg pack ${{ matrix.target }}/uctags -t tar.gz
-      - run: ./ppkg pack ${{ matrix.target }}/uctags -t tar.xz
+      - run: ./ppkg bundle ${{ matrix.target }}/uctags .tar.gz
+      - run: ./ppkg bundle ${{ matrix.target }}/uctags .tar.xz
 
       - uses: actions/upload-artifact@v4
         with:
@@ -194,8 +194,8 @@ jobs:
           ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
       - run: ./ppkg install macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags --profile=${{ matrix.profile }}
-      - run: ./ppkg pack    macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags -t tar.gz
-      - run: ./ppkg pack    macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags -t tar.xz
+      - run: ./ppkg bundle  macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags .tar.gz
+      - run: ./ppkg bundle  macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags .tar.xz
 
       - uses: actions/upload-artifact@v4
         with:
@@ -249,8 +249,8 @@ jobs:
           sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
           run ./ppkg install uctags --static --profile=${{ matrix.profile }}
-          run ./ppkg pack    uctags -t tar.gz
-          run ./ppkg pack    uctags -t tar.xz
+          run ./ppkg bundle  uctags .tar.gz
+          run ./ppkg bundle  uctags .tar.xz
           EOF
 
           chmod +x run.sh
@@ -322,8 +322,8 @@ jobs:
           run ./ppkg setup
           run ./ppkg update
           run ./ppkg install uctags --static --profile=${{ matrix.profile }}
-          run ./ppkg pack    uctags -t tar.gz
-          run ./ppkg pack    uctags -t tar.xz
+          run ./ppkg bundle  uctags .tar.gz
+          run ./ppkg bundle  uctags .tar.xz
           EOF
 
       - run: curl -LO https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/master/alpine-chroot-install
