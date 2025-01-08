@@ -207,90 +207,12 @@ jobs:
     needs: [check]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
-    strategy:
-      fail-fast: false
-      matrix:
-        #target-arch: [x86_64, aarch64, ppc64le, riscv64, s390x]
-        target-arch: [x86_64, aarch64, ppc64le, s390x]
-        profile: [debug, release]
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - run: |
-          cat > run.sh <<EOF
-          set -e
-
-          export GITHUB_ACTIONS=true
-
-          COLOR_GREEN='\033[0;32m'        # Green
-          COLOR_PURPLE='\033[0;35m'       # Purple
-          COLOR_OFF='\033[0m'             # Reset
-
-          echo() {
-              printf '%b\n' "\$*"
-          }
-
-          run() {
-              echo "\${COLOR_PURPLE}==>\${COLOR_OFF} \${COLOR_GREEN}\$@\${COLOR_OFF}"
-              eval "\$*"
-          }
-
-          run uname -a
-
-          run apk update
-          run apk add g++ libc-dev linux-headers
-
-          run wget https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
-          run chmod a+x ppkg
-          run ./ppkg setup
-          run ./ppkg update
-
-          sed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
-
-          run ./ppkg install uctags --static --profile=${{ matrix.profile }}
-          run ./ppkg bundle  uctags .tar.gz
-          run ./ppkg bundle  uctags .tar.xz
-          EOF
-
-          chmod +x run.sh
-
-      # https://github.com/multiarch/qemu-user-static
-      - if: matrix.target-arch != 'x86_64'
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-
-      - if: matrix.target-arch == 'x86_64'
-        run: docker run -v $PWD:/root -w /root --name alpine         alpine:3.16 sh run.sh
-
-      - if: matrix.target-arch == 'aarch64'
-        run: docker run -v $PWD:/root -w /root --name alpine arm64v8/alpine:3.16 sh run.sh
-
-      - if: matrix.target-arch == 'ppc64le'
-        run: docker run -v $PWD:/root -w /root --name alpine ppc64le/alpine:3.16 sh run.sh
-
-      - if: matrix.target-arch == 'riscv64'
-        run: docker run -v $PWD:/root -w /root --name alpine riscv64/alpine:3.16 sh run.sh
-
-      - if: matrix.target-arch == 's390x'
-        run: docker run -v $PWD:/root -w /root --name alpine   s390x/alpine:3.16 sh run.sh
-
-      - run: ls
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: uctags---linux-${{ matrix.target-arch }}.${{ matrix.profile }}.tar
-          path: uctags-*-linux-${{ matrix.target-arch }}.${{ matrix.profile }}.tar.*
-
-
-  linux-riscv64:
-    needs: [check]
-    if: needs.check.outputs.if-has-new-commit == 'yes'
-
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
+        target-arch: [x86_64, aarch64, ppc64le, riscv64, s390x]
         profile: [debug, release]
 
     steps:
@@ -298,8 +220,6 @@ jobs:
           cat > run.sh <<EOF
           set -ex
 
-          export GITHUB_ACTIONS=true
-
           COLOR_GREEN='\033[0;32m'        # Green
           COLOR_PURPLE='\033[0;35m'       # Purple
           COLOR_OFF='\033[0m'             # Reset
@@ -313,9 +233,15 @@ jobs:
               eval "\$*"
           }
 
+          ########################################################################
+
           run uname -a
           run id
           run pwd
+
+          export GITHUB_ACTIONS=true
+
+          ########################################################################
 
           run wget https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
           run chmod a+x ppkg
@@ -324,18 +250,63 @@ jobs:
           run ./ppkg install uctags --static --profile=${{ matrix.profile }}
           run ./ppkg bundle  uctags .tar.gz
           run ./ppkg bundle  uctags .tar.xz
+
+          ########################################################################
+
+          run apk update
+          run apk add xz alpine-sdk
+
+          run openssl genrsa -out uctags.rsa 2048
+          run openssl rsa     -in uctags.rsa -pubout -out uctags.rsa.pub
+
+          run cp uctags.rsa.pub /etc/apk/keys/
+
+          run install -d ~/.abuild/
+          printf 'PACKAGER_PRIVKEY="%s"\n' "\$PWD/uctags.rsa" > ~/.abuild/abuild.conf
+
+          run ./ppkg export uctags .apk
+
+          run apk add *.apk
+          run apk info -L uctags
           EOF
 
       - run: curl -LO https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/master/alpine-chroot-install
       - run: chmod +x alpine-chroot-install
-      - run: sudo ./alpine-chroot-install -d /alpine -a riscv64 -p wget -p g++
+      - run: sudo ./alpine-chroot-install -d /alpine -a ${{ matrix.target-arch }} -p wget -p g++
       - run: /alpine/enter-chroot sh run.sh
       - run: /alpine/destroy
 
+      - run: ls
+
+      - run: |
+          set -ex
+
+          X="$(ls uctags-*-linux-${{ matrix.target-arch }}.${{ matrix.profile }}.tar.xz)"
+          Y="${X%.tar.xz}"
+          Z="$Y.apk"
+
+          mv uctags-*.apk   "$Z"
+          mv uctags.rsa.pub "$Z.rsa.pub"
+
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---linux-riscv64.${{ matrix.profile }}.tar
-          path: uctags-*-linux-riscv64.${{ matrix.profile }}.tar.*
+          name: uctags---linux-${{ matrix.target-arch }}.${{ matrix.profile }}.tar.gz
+          path: uctags-*-linux-${{ matrix.target-arch }}.${{ matrix.profile }}.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---linux-${{ matrix.target-arch }}.${{ matrix.profile }}.tar.xz
+          path: uctags-*-linux-${{ matrix.target-arch }}.${{ matrix.profile }}.tar.xz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---linux-${{ matrix.target-arch }}.${{ matrix.profile }}.apk
+          path: uctags-*-linux-${{ matrix.target-arch }}.${{ matrix.profile }}.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---linux-${{ matrix.target-arch }}.release.apk.rsa.pub
+          path: uctags-*-linux-${{ matrix.target-arch }}.release.apk.rsa.pub
 
   deb:
     needs: [check, linux]
@@ -351,7 +322,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: uctags---linux-${{ matrix.target-arch }}.release.tar
+          name: uctags---linux-${{ matrix.target-arch }}.release.tar.xz
           path: .
 
       - run: install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
@@ -360,7 +331,7 @@ jobs:
       - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
       - run: chmod a+x ppkg
       - run: ./ppkg setup
-      - run: ./ppkg export.deb linux-musl-${{ matrix.target-arch }}/uctags -o .
+      - run: ./ppkg export linux-musl-${{ matrix.target-arch }}/uctags .deb
 
       - if: matrix.target-arch == 'x86_64'
         run: sudo dpkg -i *.deb
@@ -370,7 +341,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---linux-${{ matrix.target-arch }}-deb
+          name: uctags---linux-${{ matrix.target-arch }}.deb
           path: uctags-*-linux-${{ matrix.target-arch }}.deb
 
 
@@ -388,7 +359,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: uctags---linux-${{ matrix.target-arch }}.release.tar
+          name: uctags---linux-${{ matrix.target-arch }}.release.tar.xz
           path: .
 
       - run: |
@@ -418,7 +389,7 @@ jobs:
           run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
           run chmod a+x ppkg
           run ./ppkg setup
-          run ./ppkg export.rpm linux-musl-${{ matrix.target-arch }}/uctags -o .
+          run ./ppkg export linux-musl-${{ matrix.target-arch }}/uctags .rpm
 
           run rpm -i *.rpm
           run rpm -ql uctags
@@ -440,103 +411,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---${{ matrix.target-arch }}-rpm
+          name: uctags---${{ matrix.target-arch }}.rpm
           path: uctags-*.${{ matrix.target-arch }}.rpm
-
-
-  apk:
-    needs: [check, linux]
-    if: needs.check.outputs.if-has-new-commit == 'yes'
-
-    strategy:
-      fail-fast: false
-      matrix:
-        target-arch: [x86_64, aarch64]
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: uctags---linux-${{ matrix.target-arch }}.release.tar
-          path: .
-
-      - run: |
-          cat > run.sh <<EOF
-          set -e
-
-          COLOR_GREEN='\033[0;32m'        # Green
-          COLOR_PURPLE='\033[0;35m'       # Purple
-          COLOR_OFF='\033[0m'             # Reset
-
-          echo() {
-              printf '%b\n' "\$*"
-          }
-
-          run() {
-              echo "\${COLOR_PURPLE}==>\${COLOR_OFF} \${COLOR_GREEN}\$@\${COLOR_OFF}"
-              eval "\$*"
-          }
-
-          run uname -a
-
-          run apk update
-          run apk add xz alpine-sdk
-
-          run openssl genrsa -out uctags.rsa 2048
-          run openssl rsa     -in uctags.rsa -pubout -out uctags.rsa.pub
-
-          run cp uctags.rsa.pub /etc/apk/keys/
-
-          run install -d ~/.abuild/
-          printf 'PACKAGER_PRIVKEY="%s"\n' "\$PWD/uctags.rsa" > ~/.abuild/abuild.conf
-
-          run install -d ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags
-          run tar xvf uctags-*-linux-${{ matrix.target-arch }}.release.tar.xz -C ~/.ppkg/installed/linux-musl-${{ matrix.target-arch }}/uctags --strip-components=1
-
-          run wget https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
-          run chmod a+x ppkg
-          run ./ppkg setup
-
-          run ./ppkg export.apk uctags -o .
-
-          run apk add *.apk
-          run apk info -L uctags
-          EOF
-
-          chmod +x run.sh
-
-      # https://github.com/multiarch/qemu-user-static
-      - if: matrix.target-arch != 'x86_64'
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-
-      - if: matrix.target-arch == 'x86_64'
-        run: docker run -v $PWD:$PWD -w $PWD --name fedora         alpine:3.16 sh run.sh
-
-      - if: matrix.target-arch == 'aarch64'
-        run: docker run -v $PWD:$PWD -w $PWD --name fedora arm64v8/alpine:3.16 sh run.sh
-
-      - run: ls
-
-      - run: |
-          set -ex
-
-          X="$(ls uctags-*-linux-${{ matrix.target-arch }}.release.tar.xz)"
-          Y="${X%.tar.xz}"
-          Z="$Y.apk"
-
-          mv uctags-*.apk   "$Z"
-          mv uctags.rsa.pub "$Z.rsa.pub"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: uctags---${{ matrix.target-arch }}.release.apk
-          path: uctags-*-${{ matrix.target-arch }}.release.apk
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: uctags---${{ matrix.target-arch }}.release.apk.rsa.pub
-          path: uctags-*-${{ matrix.target-arch }}.release.apk.rsa.pub
 
 
   pkg:
@@ -553,7 +429,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: uctags---linux-${{ matrix.target-arch }}.release.tar
+          name: uctags---linux-${{ matrix.target-arch }}.release.tar.xz
           path: .
 
       - run: |
@@ -572,7 +448,7 @@ jobs:
           run chmod a+x ppkg
 
           run ./ppkg setup
-          run ./ppkg export.pkg linux-musl-${{ matrix.target-arch }}/uctags
+          run ./ppkg export linux-musl-${{ matrix.target-arch }}/uctags .pkg.tar.xz
 
           run sudo pacman -U --noconfirm *.pkg.tar.xz
           run pacman -Qi uctags
@@ -599,7 +475,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---${{ matrix.target-arch }}-pkg
+          name: uctags---${{ matrix.target-arch }}.pkg.tar.xz
           path: uctags-*-${{ matrix.target-arch }}.pkg.tar.xz
 
 
@@ -644,7 +520,7 @@ jobs:
 
 
   publish:
-    needs: [check, manpages, dragonflybsd, bsd, macos, android, linux, linux-riscv64, deb, rpm, apk, pkg]
+    needs: [check, manpages, dragonflybsd, bsd, macos, android, linux, deb, rpm, pkg]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
     runs-on: ubuntu-latest
