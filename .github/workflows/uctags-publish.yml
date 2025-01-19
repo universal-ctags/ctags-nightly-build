@@ -508,15 +508,15 @@ jobs:
 
       - run: ./ndk-pkg install android-35-arm64-v8a,armeabi-v7a,x86_64,x86/uctags --static --profile=${{ matrix.profile }}
 
-      - run: ./ndk-pkg pack    android-35-arm64-v8a/uctags
-      - run: ./ndk-pkg pack    android-35-armeabi-v7a/uctags
-      - run: ./ndk-pkg pack    android-35-x86_64/uctags
-      - run: ./ndk-pkg pack    android-35-x86/uctags
+      - run: ./ndk-pkg bundle  android-35-arm64-v8a/uctags   .tar.xz
+      - run: ./ndk-pkg bundle  android-35-armeabi-v7a/uctags .tar.xz
+      - run: ./ndk-pkg bundle  android-35-x86_64/uctags      .tar.xz
+      - run: ./ndk-pkg bundle  android-35-x86/uctags         .tar.xz
 
       - uses: actions/upload-artifact@v4
         with:
           name: uctags---android-${{ matrix.profile }}
-          path: uctags-*-android-*.tar.*
+          path: uctags-*-android-*.tar.xz
 
 
   publish:
