@@ -305,8 +305,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---linux-${{ matrix.target-arch }}.release.apk.rsa.pub
-          path: uctags-*-linux-${{ matrix.target-arch }}.release.apk.rsa.pub
+          name: uctags---linux-${{ matrix.target-arch }}.${{ matrix.profile }}.apk.rsa.pub
+          path: uctags-*-linux-${{ matrix.target-arch }}.${{ matrix.profile }}.apk.rsa.pub
 
   deb:
     needs: [check, linux]
