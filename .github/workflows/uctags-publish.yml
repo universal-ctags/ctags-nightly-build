@@ -86,8 +86,9 @@ jobs:
 
 
   dragonflybsd:
-    needs: [check]
     if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    needs: [check]
 
     runs-on: ubuntu-latest
 
@@ -127,47 +128,176 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---dragonflybsd-${{ matrix.version }}-x86_64-${{ matrix.profile }}.tar
-          path: uctags-*-dragonflybsd-${{ matrix.version }}-x86_64.${{ matrix.profile }}.tar.*
+          name: uctags---dragonflybsd-${{ matrix.version }}-x86_64-${{ matrix.profile }}.tar.gz
+          path: uctags-*-dragonflybsd-${{ matrix.version }}-x86_64.${{ matrix.profile }}.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---dragonflybsd-${{ matrix.version }}-x86_64-${{ matrix.profile }}.tar.xz
+          path: uctags-*-dragonflybsd-${{ matrix.version }}-x86_64.${{ matrix.profile }}.tar.xz
 
 
-  bsd:
-    needs: [check]
+
+  freebsd:
     if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    needs: [check]
 
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
+        version: ['14.2', '14.1', '14.0', '13.5', '13.4', '13.3', '13.2']
         profile: [debug, release]
-        # https://ftp.netbsd.org/pub/NetBSD/
-        # https://cdn.openbsd.org/pub/OpenBSD/
-        # https://archive.freebsd.org/old-releases/amd64/
-        target: ['netbsd-10.0-amd64', 'netbsd-9.4-amd64', 'netbsd-9.3-amd64', 'netbsd-9.2-amd64', 'openbsd-7.6-amd64', 'openbsd-7.5-amd64', 'openbsd-7.4-amd64', 'openbsd-7.3-amd64', 'freebsd-14.2-amd64', 'freebsd-14.1-amd64', 'freebsd-14.0-amd64', 'freebsd-13.4-amd64', 'freebsd-13.3-amd64', 'freebsd-13.2-amd64', 'freebsd-13.1-amd64', 'freebsd-13.0-amd64']
 
     steps:
-      - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
-      - run: chmod a+x ppkg
-      - run: ./ppkg setup
-      - run: ./ppkg update
+      - uses: actions/checkout@v4
 
-      - run: |
-          ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
+      - uses: cross-platform-actions/action@master
+        with:
+          operating_system: freebsd
+          version: ${{ matrix.version }}
+          shell: bash
+          run: |
+            run() {
+              printf "\033[0;35m==>\033[0m \033[0;32m%b\n\033[0m" "$*"
+              eval "$@"
+            }
 
-      - if:  ${{ startsWith(matrix.target, 'openbsd') }}
-        run: ./ppkg install ${{ matrix.target }}/uctags --profile=${{ matrix.profile }}
+            run sudo pkg install -y curl
 
-      - if:  ${{ ! startsWith(matrix.target, 'openbsd') }}
-        run: ./ppkg install ${{ matrix.target }}/uctags --profile=${{ matrix.profile }} --static
+            run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+            run chmod a+x ppkg
 
-      - run: ./ppkg bundle ${{ matrix.target }}/uctags .tar.gz
-      - run: ./ppkg bundle ${{ matrix.target }}/uctags .tar.xz
+            run ./ppkg setup --syspm
+            run ./ppkg update
+
+            gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
+
+            run ./ppkg install freebsd-${{ matrix.version }}-amd64/uctags --static --profile=${{ matrix.profile }}
+            run ./ppkg bundle  freebsd-${{ matrix.version }}-amd64/uctags .tar.gz
+            run ./ppkg bundle  freebsd-${{ matrix.version }}-amd64/uctags .tar.xz
 
       - uses: actions/upload-artifact@v4
         with:
-          name: uctags---${{ matrix.target }}.${{ matrix.profile }}.tar
-          path: uctags-*-${{ matrix.target }}.${{ matrix.profile }}.tar.*
+          name: uctags---freebsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.gz
+          path: uctags-*-freebsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---freebsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.xz
+          path: uctags-*-freebsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.xz
+
+
+
+  openbsd:
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    needs: [check]
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['7.6', '7.5', '7.4', '7.3', '7.2']
+        profile: [debug, release]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cross-platform-actions/action@master
+        with:
+          operating_system: openbsd
+          version: ${{ matrix.version }}
+          shell: bash
+          run: |
+            run() {
+              printf "\033[0;35m==>\033[0m \033[0;32m%b\n\033[0m" "$*"
+              eval "$@"
+            }
+
+            run sudo pkg_add curl
+
+            run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+            run chmod a+x ppkg
+
+            run ./ppkg setup --syspm
+            run ./ppkg update
+
+            gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
+
+            run ./ppkg install openbsd-${{ matrix.version }}-amd64/uctags --profile=${{ matrix.profile }}
+            run ./ppkg bundle  openbsd-${{ matrix.version }}-amd64/uctags .tar.gz
+            run ./ppkg bundle  openbsd-${{ matrix.version }}-amd64/uctags .tar.xz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---openbsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.gz
+          path: uctags-*-openbsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---openbsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.xz
+          path: uctags-*-openbsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.xz
+
+
+
+  netbsd:
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    needs: [check]
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['10.1', '10.0', '9.4', '9.3', '9.2']
+        profile: [debug, release]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cross-platform-actions/action@master
+        with:
+          operating_system: netbsd
+          version: ${{ matrix.version }}
+          shell: bash
+          run: |
+            run() {
+              printf "\033[0;35m==>\033[0m \033[0;32m%b\n\033[0m" "$*"
+              eval "$@"
+            }
+
+            run sudo pkgin -y install curl
+
+            run curl -LO -k https://curl.se/ca/cacert.pem
+
+            run export SSL_CERT_FILE="$PWD/cacert.pem"
+
+            run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+            run chmod a+x ppkg
+
+            run ./ppkg setup --syspm
+            run ./ppkg update
+
+            gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
+
+            run ./ppkg install netbsd-${{ matrix.version }}-amd64/uctags --static --profile=${{ matrix.profile }}
+            run ./ppkg bundle  netbsd-${{ matrix.version }}-amd64/uctags .tar.gz
+            run ./ppkg bundle  netbsd-${{ matrix.version }}-amd64/uctags .tar.xz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---netbsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.gz
+          path: uctags-*-netbsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uctags---netbsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.xz
+          path: uctags-*-netbsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.xz
 
 
   macos:
@@ -520,7 +650,7 @@ jobs:
 
 
   publish:
-    needs: [check, manpages, dragonflybsd, bsd, macos, android, linux, deb, rpm, pkg]
+    needs: [check, manpages, dragonflybsd, freebsd, openbsd, netbsd, macos, android, linux, deb, rpm, pkg]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
     runs-on: ubuntu-latest
