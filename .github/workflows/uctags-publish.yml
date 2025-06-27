@@ -148,7 +148,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ['14.2', '14.1', '14.0', '13.5', '13.4', '13.3', '13.2']
+        version: ['14.3', '14.2', '14.1', '14.0', '13.5', '13.4', '13.3', '13.2']
         profile: [debug, release]
 
     steps:
