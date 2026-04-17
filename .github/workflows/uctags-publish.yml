@@ -127,7 +127,7 @@ jobs:
             run ./ppkg setup
             run ./ppkg update
 
-            ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
+            ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
             run ./ppkg install dragonflybsd-${{ matrix.version }}-x86_64/uctags --static --profile=${{ matrix.profile }}
             run ./ppkg bundle  dragonflybsd-${{ matrix.version }}-x86_64/uctags .tar.gz
@@ -328,7 +328,7 @@ jobs:
       - run: ./ppkg update
 
       - run: |
-          ~/.ppkg/uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
+          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
 
       - run: ./ppkg install macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags --profile=${{ matrix.profile }}
       - run: ./ppkg bundle  macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags .tar.gz
