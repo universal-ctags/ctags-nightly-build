@@ -14,7 +14,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: universal-ctags/ctags
 
@@ -60,7 +60,7 @@ jobs:
     steps:
       - run: pip3 install -U docutils
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: universal-ctags/ctags
           ref: ${{ needs.check.outputs.git-sha }}
@@ -79,7 +79,7 @@ jobs:
 
           tar cvJf manpages.tar.xz manpages
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: manpages
           path: manpages.tar.xz
@@ -133,12 +133,12 @@ jobs:
             run ./ppkg bundle  dragonflybsd-${{ matrix.version }}-x86_64/uctags .tar.gz
             run ./ppkg bundle  dragonflybsd-${{ matrix.version }}-x86_64/uctags .tar.xz
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---dragonflybsd-${{ matrix.version }}-x86_64-${{ matrix.profile }}.tar.gz
           path: uctags-*-dragonflybsd-${{ matrix.version }}-x86_64.${{ matrix.profile }}.tar.gz
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---dragonflybsd-${{ matrix.version }}-x86_64-${{ matrix.profile }}.tar.xz
           path: uctags-*-dragonflybsd-${{ matrix.version }}-x86_64.${{ matrix.profile }}.tar.xz
@@ -159,7 +159,7 @@ jobs:
         profile: [debug, release]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: cross-platform-actions/action@master
         with:
@@ -186,12 +186,12 @@ jobs:
             run ./ppkg bundle  freebsd-${{ matrix.version }}-amd64/uctags .tar.gz
             run ./ppkg bundle  freebsd-${{ matrix.version }}-amd64/uctags .tar.xz
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---freebsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.gz
           path: uctags-*-freebsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.gz
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---freebsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.xz
           path: uctags-*-freebsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.xz
@@ -212,7 +212,7 @@ jobs:
         profile: [debug, release]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: cross-platform-actions/action@master
         with:
@@ -239,12 +239,12 @@ jobs:
             run ./ppkg bundle  openbsd-${{ matrix.version }}-amd64/uctags .tar.gz
             run ./ppkg bundle  openbsd-${{ matrix.version }}-amd64/uctags .tar.xz
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---openbsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.gz
           path: uctags-*-openbsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.gz
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---openbsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.xz
           path: uctags-*-openbsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.xz
@@ -265,7 +265,7 @@ jobs:
         profile: [debug, release]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: cross-platform-actions/action@master
         with:
@@ -296,12 +296,12 @@ jobs:
             run ./ppkg bundle  netbsd-${{ matrix.version }}-amd64/uctags .tar.gz
             run ./ppkg bundle  netbsd-${{ matrix.version }}-amd64/uctags .tar.xz
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---netbsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.gz
           path: uctags-*-netbsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.gz
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---netbsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.xz
           path: uctags-*-netbsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.xz
@@ -334,7 +334,7 @@ jobs:
       - run: ./ppkg bundle  macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags .tar.gz
       - run: ./ppkg bundle  macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags .tar.xz
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags-macos-${{ matrix.target-version }}-${{ matrix.target-arch }}.${{ matrix.profile }}.tar
           path: uctags-*.tar.*
@@ -425,22 +425,22 @@ jobs:
           mv uctags-*.apk   "$Z"
           mv uctags.rsa.pub "$Z.rsa.pub"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---linux-${{ matrix.target-arch }}.${{ matrix.profile }}.tar.gz
           path: uctags-*-linux-${{ matrix.target-arch }}.${{ matrix.profile }}.tar.gz
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---linux-${{ matrix.target-arch }}.${{ matrix.profile }}.tar.xz
           path: uctags-*-linux-${{ matrix.target-arch }}.${{ matrix.profile }}.tar.xz
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---linux-${{ matrix.target-arch }}.${{ matrix.profile }}.apk
           path: uctags-*-linux-${{ matrix.target-arch }}.${{ matrix.profile }}.apk
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---linux-${{ matrix.target-arch }}.${{ matrix.profile }}.apk.rsa.pub
           path: uctags-*-linux-${{ matrix.target-arch }}.${{ matrix.profile }}.apk.rsa.pub
@@ -457,7 +457,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: uctags---linux-${{ matrix.target-arch }}.release.tar.xz
           path: .
@@ -476,7 +476,7 @@ jobs:
       - if: matrix.target-arch == 'x86_64'
         run: dpkg -L uctags
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---linux-${{ matrix.target-arch }}.deb
           path: uctags-*-linux-${{ matrix.target-arch }}.deb
@@ -494,7 +494,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: uctags---linux-${{ matrix.target-arch }}.release.tar.xz
           path: .
@@ -546,7 +546,7 @@ jobs:
 
       - run: ls
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---${{ matrix.target-arch }}.rpm
           path: uctags-*.${{ matrix.target-arch }}.rpm
@@ -564,7 +564,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: uctags---linux-${{ matrix.target-arch }}.release.tar.xz
           path: .
@@ -610,7 +610,7 @@ jobs:
       - run: docker build --build-arg UID=$(id -u) --build-arg GID=$(id -g) -t myarchlinux .
       - run: docker run -v $PWD:/home/leleliu008/w -w /home/leleliu008/w --name myarchlinux myarchlinux sh run.sh
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---${{ matrix.target-arch }}.pkg.tar.xz
           path: uctags-*-${{ matrix.target-arch }}.pkg.tar.xz
@@ -650,7 +650,7 @@ jobs:
       - run: ./ndk-pkg bundle  android-35-x86_64/uctags      .tar.xz
       - run: ./ndk-pkg bundle  android-35-x86/uctags         .tar.xz
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: uctags---android-${{ matrix.profile }}
           path: uctags-*-android-*.tar.xz
@@ -666,7 +666,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
 
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: '*'
           path: .
