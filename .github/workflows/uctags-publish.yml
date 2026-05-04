@@ -699,8 +699,7 @@ jobs:
           done
 
       - run: |
-          printf 'build-from: https://github.com/universal-ctags/ctags/tree/%s\n\n' ${{ needs.check.outputs.git-sha }} > notes.md
-          printf 'sha256sum:\n```\n%s\n```\n' "$(sha256sum uctags-*.tar.* *.deb *.rpm *.apk *.rsa.pub)" >> notes.md
+          printf 'build-from: https://github.com/universal-ctags/ctags/tree/%s\n' ${{ needs.check.outputs.git-sha }} > notes.md
 
           VERSION="$(ls uctags-*-linux-x86_64.release.tar.xz | cut -d- -f2)"
           TAGNAME="$VERSION+${{ needs.check.outputs.git-sha }}"
