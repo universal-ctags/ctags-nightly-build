@@ -126,9 +126,7 @@ jobs:
             run chmod a+x ppkg
             run ./ppkg setup
             run ./ppkg update
-
-            ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
-
+            run ./ppkg formula-set uctags git-sha ${{ needs.check.outputs.git-sha }}
             run ./ppkg install dragonflybsd-${{ matrix.version }}-x86_64/uctags --static --profile=${{ matrix.profile }}
             run ./ppkg bundle  dragonflybsd-${{ matrix.version }}-x86_64/uctags .tar.gz
             run ./ppkg bundle  dragonflybsd-${{ matrix.version }}-x86_64/uctags .tar.xz
@@ -179,9 +177,7 @@ jobs:
 
             run ./ppkg setup --syspm
             run ./ppkg update
-
-            gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
-
+            run ./ppkg formula-set uctags git-sha ${{ needs.check.outputs.git-sha }}
             run ./ppkg install freebsd-${{ matrix.version }}-amd64/uctags --static --profile=${{ matrix.profile }}
             run ./ppkg bundle  freebsd-${{ matrix.version }}-amd64/uctags .tar.gz
             run ./ppkg bundle  freebsd-${{ matrix.version }}-amd64/uctags .tar.xz
@@ -232,9 +228,7 @@ jobs:
 
             run ./ppkg setup --syspm
             run ./ppkg update
-
-            gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
-
+            run ./ppkg formula-set uctags git-sha ${{ needs.check.outputs.git-sha }}
             run ./ppkg install openbsd-${{ matrix.version }}-amd64/uctags --profile=${{ matrix.profile }}
             run ./ppkg bundle  openbsd-${{ matrix.version }}-amd64/uctags .tar.gz
             run ./ppkg bundle  openbsd-${{ matrix.version }}-amd64/uctags .tar.xz
@@ -289,9 +283,7 @@ jobs:
 
             run ./ppkg setup --syspm
             run ./ppkg update
-
-            gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
-
+            run ./ppkg formula-set uctags git-sha ${{ needs.check.outputs.git-sha }}
             run ./ppkg install netbsd-${{ matrix.version }}-amd64/uctags --static --profile=${{ matrix.profile }}
             run ./ppkg bundle  netbsd-${{ matrix.version }}-amd64/uctags .tar.gz
             run ./ppkg bundle  netbsd-${{ matrix.version }}-amd64/uctags .tar.xz
@@ -326,10 +318,7 @@ jobs:
 
       - run: ./ppkg setup
       - run: ./ppkg update
-
-      - run: |
-          ~/.uppm/installed/gsed/bin/gsed -i "/git-url/a git-sha: ${{ needs.check.outputs.git-sha }}" ~/.ppkg/repos.d/official-core/formula/uctags.yml
-
+      - run: ./ppkg formula-set uctags git-sha ${{ needs.check.outputs.git-sha }}
       - run: ./ppkg install macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags --profile=${{ matrix.profile }}
       - run: ./ppkg bundle  macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags .tar.gz
       - run: ./ppkg bundle  macos-${{ matrix.target-version }}-${{ matrix.target-arch }}/uctags .tar.xz
@@ -384,6 +373,7 @@ jobs:
           run chmod a+x ppkg
           run ./ppkg setup
           run ./ppkg update
+          run ./ppkg formula-set uctags git-sha ${{ needs.check.outputs.git-sha }}
           run ./ppkg install uctags --static --profile=${{ matrix.profile }}
           run ./ppkg bundle  uctags .tar.gz
           run ./ppkg bundle  uctags .tar.xz
@@ -640,8 +630,7 @@ jobs:
       - run: ./ndk-pkg setup
       - run: ./ndk-pkg update
 
-      - run: |
-          printf "git-sha: ${{ needs.check.outputs.git-sha }}\n" >> ~/.ndk-pkg/repos.d/official-core/formula/uctags.yml
+      - run: ./ndk-pkg formula-set uctags git-sha ${{ needs.check.outputs.git-sha }}
 
       - run: ./ndk-pkg install android-35-arm64-v8a,armeabi-v7a,x86_64,x86/uctags --static --profile=${{ matrix.profile }}
 
