@@ -142,6 +142,50 @@ jobs:
           path: uctags-*-dragonflybsd-${{ matrix.version }}-x86_64.${{ matrix.profile }}.tar.xz
 
 
+  midnightbsd:
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    needs: [check]
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['4.0']
+        profile: [debug, release]
+
+    steps:
+      - uses: cross-platform-actions/action@master
+        with:
+          operating_system: midnightbsd
+          version: "${{ matrix.version }}.4"
+          shell: bash
+          run: |
+            run() {
+              printf "\033[0;35m==>\033[0m \033[0;32m%b\n\033[0m" "$*"
+              eval "$@"
+            }
+
+            run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+            run chmod a+x ppkg
+            run ./ppkg setup --syspm
+            run ./ppkg update
+            run ./ppkg formula-set uctags git-sha ${{ needs.check.outputs.git-sha }}
+            run ./ppkg install midnightbsd-${{ matrix.version }}-amd64/uctags --static --profile=${{ matrix.profile }}
+            run ./ppkg bundle  midnightbsd-${{ matrix.version }}-amd64/uctags .tar.gz
+            run ./ppkg bundle  midnightbsd-${{ matrix.version }}-amd64/uctags .tar.xz
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: uctags---midnightbsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.gz
+          path: uctags-*-midnightbsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.gz
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: uctags---midnightbsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.xz
+          path: uctags-*-midnightbsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.xz
+
 
   freebsd:
     if: needs.check.outputs.if-has-new-commit == 'yes'
@@ -646,7 +690,7 @@ jobs:
 
 
   publish:
-    needs: [check, manpages, dragonflybsd, freebsd, openbsd, netbsd, macos, android, linux, deb, rpm, pkg]
+    needs: [check, manpages, dragonflybsd, midnightbsd, freebsd, openbsd, netbsd, macos, android, linux, deb, rpm, pkg]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
     runs-on: ubuntu-latest
