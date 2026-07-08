@@ -4,7 +4,18 @@ build [Universal Ctags](https://github.com/universal-ctags/ctags) every night vi
 
 ## Notes
 
-This repository only provides snapshot prebuilt binaries for `macOS`, `Linux`, `Android`, `DragonFlyBSD`, `FreeBSD`, `OpenBSD`, `NetBSD`, they're not regular releases.
+This repository only provides snapshot prebuilt binaries for:
+
+|OS|ARCH|
+|-|-|
+|`macOS`|`x86_64` `arm64`|
+|`Linux`|`x86_64` `aarch64` `ppc64le` `riscv64` `loongarch64` `s390x`|
+|`Android`|`x86_64` `aarch64` `armv7a` `i686`|
+|`DragonFlyBSD`|`x86_64`|
+|`MidnightBSD`|`amd64`|
+|`FreeBSD`|`amd64`|
+|`OpenBSD`|`amd64`|
+|`NetBSD`|`amd64`|
 
 If you need prebuilt binaries for `Windows`, please go to [ctags-win32](https://github.com/universal-ctags/ctags-win32)
 
@@ -16,13 +27,13 @@ If you are extremely concerned about performance, building it on your local mach
 
 ![dependencies](uctags-dependencies.svg)
 
-## for `Linux`, `Android`, `DragonFlyBSD`, `FreeBSD`, `OpenBSD`, `NetBSD`
+## for `Linux`, `Android`, `DragonFlyBSD`, `MidnightBSD`, `FreeBSD`, `OpenBSD`, `NetBSD`
 
-All dependent libraries including libc are statically linked into the executable.
+All dependencies including libc are fully statically linked into the executables.
 
 ## for `macOS`
 
-All dependent libraries except `/usr/lib/libSystem.B.dylib` are statically linked into the executable.
+All dependencies except libc(`/usr/lib/libSystem.B.dylib`) are statically linked into the executables.
 
 ## builder
 
