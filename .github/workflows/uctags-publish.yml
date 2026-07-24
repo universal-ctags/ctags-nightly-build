@@ -325,7 +325,7 @@ jobs:
             run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
             run chmod a+x ppkg
 
-            run ./ppkg setup --syspm
+            run ./ppkg setup
             run ./ppkg update
             run ./ppkg formula-set uctags git-sha ${{ needs.check.outputs.git-sha }}
             run ./ppkg install netbsd-${{ matrix.version }}-amd64/uctags --static --profile=${{ matrix.profile }}
