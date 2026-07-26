@@ -305,6 +305,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - run: curl -LO https://curl.se/ca/cacert.pem
+
       - uses: cross-platform-actions/action@master
         with:
           operating_system: netbsd
@@ -315,10 +317,6 @@ jobs:
               printf "\033[0;35m==>\033[0m \033[0;32m%b\n\033[0m" "$*"
               eval "$@"
             }
-
-            run sudo pkgin -y install curl
-
-            run curl -LO -k https://curl.se/ca/cacert.pem
 
             run export SSL_CERT_FILE="$PWD/cacert.pem"
 
