@@ -735,14 +735,14 @@ jobs:
             esac
           done
 
-      - run: |
-          printf 'build-from: https://github.com/universal-ctags/ctags/tree/%s\n' ${{ needs.check.outputs.git-sha }} > notes.md
+      # to avaid: failed to run git: fatal: not a git repository (or any of the parent directories): .git
+      - run: git -c init.defaultBranch=master init
+      - run: git remote add origin ${{ github.repositoryUrl }}
 
+      - id: tagname
+        run: |
           VERSION="$(ls uctags-*-linux-x86_64.release.tar.xz | cut -d- -f2)"
           TAGNAME="$VERSION+${{ needs.check.outputs.git-sha }}"
+          printf 'TAGNAME=%s\n' "$TAGNAME"
 
-          # to avaid: failed to run git: fatal: not a git repository (or any of the parent directories): .git
-          git -c init.defaultBranch=master init
-          git remote add origin ${{ github.repositoryUrl }}
-
-          gh release create "$TAGNAME" uctags-*.tar.* *.deb *.rpm *.apk *.rsa.pub --title "$TAGNAME" --notes-file notes.md
+      - run: gh release create ${{ steps.tagname.outputs.TAGNAME }} uctags-*.tar.* *.deb *.rpm *.apk *.rsa.pub --title ${{ steps.tagname.outputs.TAGNAME }} --notes 'build-from: https://github.com/universal-ctags/ctags/tree/${{ needs.check.outputs.git-sha }}'
