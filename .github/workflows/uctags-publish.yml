@@ -750,4 +750,5 @@ jobs:
           TAGNAME="$VERSION+${{ needs.check.outputs.git-sha }}"
           printf 'TAGNAME=%s\n' "$TAGNAME"
 
-      - run: gh release create ${{ steps.tagname.outputs.TAGNAME }} uctags-*.tar.* *.deb *.rpm *.apk *.rsa.pub --title ${{ steps.tagname.outputs.TAGNAME }} --notes 'build-from: https://github.com/universal-ctags/ctags/tree/${{ needs.check.outputs.git-sha }}'
+      - run: |
+          gh release create ${{ steps.tagname.outputs.TAGNAME }} uctags-*.tar.* *.deb *.rpm *.apk *.rsa.pub --title ${{ steps.tagname.outputs.TAGNAME }} --notes 'build-from: https://github.com/universal-ctags/ctags/tree/${{ needs.check.outputs.git-sha }}'
