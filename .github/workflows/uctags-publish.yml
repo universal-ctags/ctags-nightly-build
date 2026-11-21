@@ -197,12 +197,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ['15.1', '15.0', '14.5', '14.4', '14.3', '14.2', '14.1', '14.0', '13.5', '13.4', '13.3', '13.2']
+        version: ['15.1', '14.5', '14.4', '14.3', '14.2', '14.1', '14.0']
         profile: [debug, release]
 
     steps:
-      - uses: actions/checkout@v5
-
       - uses: cross-platform-actions/action@master
         with:
           operating_system: freebsd
@@ -257,8 +255,6 @@ jobs:
         profile: [debug, release]
 
     steps:
-      - uses: actions/checkout@v5
-
       - uses: cross-platform-actions/action@master
         with:
           operating_system: openbsd
@@ -304,12 +300,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ['10.1', '10.2', '10.1', '10.0', '9.5', '9.4', '9.3', '9.2']
+        version: ['11.1', '11.0', '10.2', '10.1', '10.0', '9.5', '9.4', '9.3', '9.2']
         profile: [debug, release]
 
     steps:
-      - uses: actions/checkout@v5
-
       - run: curl -LO https://curl.se/ca/cacert.pem
 
       - uses: cross-platform-actions/action@master
@@ -344,6 +338,44 @@ jobs:
         with:
           name: uctags---netbsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.xz
           path: uctags-*-netbsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.xz
+
+
+  cross:
+    if: needs.check.outputs.if-has-new-commit == 'yes'
+
+    needs: [check]
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['15.0', '13.5', '13.4', '13.3', '13.2']
+        profile: [debug, release]
+
+    steps:
+      - run: curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+      - run: chmod a+x ppkg
+
+      - run: ./ppkg setup
+      - run: ./ppkg update
+
+      - run: ./ppkg formula-set uctags git-sha ${{ needs.check.outputs.git-sha }}
+
+      - run: ./ppkg install freebsd-${{ matrix.version }}-amd64/uctags --static --profile=${{ matrix.profile }}
+
+      - run: ./ppkg bundle  freebsd-${{ matrix.version }}-amd64/uctags .tar.gz
+      - run: ./ppkg bundle  freebsd-${{ matrix.version }}-amd64/uctags .tar.xz
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: uctags---freebsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.gz
+          path: uctags-*-freebsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.gz
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: uctags---freebsd-${{ matrix.version }}-amd64-${{ matrix.profile }}.tar.xz
+          path: uctags-*-freebsd-${{ matrix.version }}-amd64.${{ matrix.profile }}.tar.xz
 
 
   macos:
@@ -573,7 +605,7 @@ jobs:
           run ./ppkg setup
           run ./ppkg export linux-musl-${{ matrix.target-arch }}/uctags .rpm
 
-          run rpm -i *.rpm
+          run rpm -i --nosignature *.rpm
           run rpm -ql uctags
           EOF
 
@@ -687,12 +719,12 @@ jobs:
 
       - run: ./ndk-pkg formula-set uctags git-sha ${{ needs.check.outputs.git-sha }}
 
-      - run: ./ndk-pkg install android-35-arm64-v8a,armeabi-v7a,x86_64,x86/uctags --static --profile=${{ matrix.profile }}
+      - run: ./ndk-pkg install android-37-arm64-v8a,armeabi-v7a,x86_64,x86/uctags --static --profile=${{ matrix.profile }}
 
-      - run: ./ndk-pkg bundle  android-35-arm64-v8a/uctags   .tar.xz
-      - run: ./ndk-pkg bundle  android-35-armeabi-v7a/uctags .tar.xz
-      - run: ./ndk-pkg bundle  android-35-x86_64/uctags      .tar.xz
-      - run: ./ndk-pkg bundle  android-35-x86/uctags         .tar.xz
+      - run: ./ndk-pkg bundle  android-37-arm64-v8a/uctags   .tar.xz
+      - run: ./ndk-pkg bundle  android-37-armeabi-v7a/uctags .tar.xz
+      - run: ./ndk-pkg bundle  android-37-x86_64/uctags      .tar.xz
+      - run: ./ndk-pkg bundle  android-37-x86/uctags         .tar.xz
 
       - uses: actions/upload-artifact@v6
         with:
@@ -701,7 +733,7 @@ jobs:
 
 
   publish:
-    needs: [check, manpages, dragonflybsd, midnightbsd, freebsd, openbsd, netbsd, macos, android, linux, deb, rpm, pkg]
+    needs: [check, manpages, dragonflybsd, midnightbsd, freebsd, openbsd, netbsd, cross, macos, android, linux, deb, rpm, pkg]
     if: needs.check.outputs.if-has-new-commit == 'yes'
 
     runs-on: ubuntu-latest
@@ -722,23 +754,27 @@ jobs:
         run: |
           set -x
 
-          for FILENAME in uctags-*.tar.*
+          for f in uctags-*.tar.*
           do
-            case $FILENAME in
+            case $f in
               *.pkg.tar.xz)
                 ;;
               *)
-                DIR_NAME="${FILENAME%.tar.*}"
+                d="${f%.tar.*}"
 
-                tar xvf "$FILENAME"
-                tar xvf manpages.tar.xz -C "$DIR_NAME" --strip-components=1
+                tar xvf "$f"
+                tar xvf manpages.tar.xz -C "$d" --strip-components=1
 
-                case $FILENAME in
+                case $f in
                   *.tar.gz)  FMT='--gzip'  ;;
                   *.tar.xz)  FMT='--xz'    ;;
                 esac
 
-                tar -c -v "$FMT" -f "$FILENAME" "$DIR_NAME"
+                rm "$f"
+
+                tar -c -v "$FMT" -f "$f" "$d"
+
+                rm -rf "$d"
             esac
           done
 
@@ -750,7 +786,7 @@ jobs:
         run: |
           VERSION="$(ls uctags-*-linux-x86_64.release.tar.xz | cut -d- -f2)"
           TAGNAME="$VERSION+${{ needs.check.outputs.git-sha }}"
-          printf 'TAGNAME=%s\n' "$TAGNAME"
+          printf 'TAGNAME=%s\n' "$TAGNAME" >> "$GITHUB_OUTPUT"
 
       - run: |
-          gh release create ${{ steps.tagname.outputs.TAGNAME }} uctags-*.tar.* *.deb *.rpm *.apk *.rsa.pub --title ${{ steps.tagname.outputs.TAGNAME }} --notes 'build-from: https://github.com/universal-ctags/ctags/tree/${{ needs.check.outputs.git-sha }}'
+          gh release create ${{ steps.tagname.outputs.TAGNAME }} * --title ${{ steps.tagname.outputs.TAGNAME }} --notes 'build-from: https://github.com/universal-ctags/ctags/tree/${{ needs.check.outputs.git-sha }}'
